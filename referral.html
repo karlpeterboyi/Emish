@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refer & Earn | Niffer Cosmetics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' },
+            cream: '#fef7f0'
+          },
+          fontFamily: { display: ['Playfair Display', 'serif'], sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-cream font-sans text-gray-800 antialiased">
+  <div class="bg-primary-700 text-white text-center py-2 text-sm">
+    <span data-i18n="announcement">Free delivery in Dar es Salaam for orders over TZS 50,000 | Referral commissions available!</span>
+  </div>
+  <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-primary-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+      <a href="index.html" class="flex items-center gap-2">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-display font-bold">N</div>
+        <span class="font-display text-xl font-semibold text-primary-800">Niffer</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <button id="langToggle" class="px-3 py-1.5 rounded-full border border-primary-200 text-sm"><span id="langLabel">EN</span></button>
+        <a href="account.html" class="p-2 rounded-full hover:bg-primary-50">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-10">
+    <div class="text-center mb-10">
+      <h1 class="font-display text-3xl md:text-4xl font-bold text-primary-900 mb-3" data-i18n="referral_dashboard">Refer & Earn</h1>
+      <p class="text-gray-600 max-w-xl mx-auto" data-i18n="ref_cta_desc">Invite friends and earn 10% commission on their first order.</p>
+    </div>
+
+    <div id="loginPrompt" class="bg-white rounded-3xl p-8 text-center shadow-sm border border-primary-50 mb-8 hidden">
+      <p class="text-gray-600 mb-4">Please login or register to get your unique referral code.</p>
+      <a href="account.html" class="inline-flex px-6 py-3 bg-primary-600 text-white rounded-full font-medium">Login / Register</a>
+    </div>
+
+    <div id="refDashboard" class="hidden space-y-8">
+      <div class="bg-gradient-to-br from-primary-600 to-primary-800 rounded-3xl p-8 text-white text-center">
+        <p class="text-primary-200 text-sm mb-2" data-i18n="your_code">Your Referral Code</p>
+        <p id="refCodeDisplay" class="text-3xl md:text-4xl font-bold tracking-widest mb-4 font-mono">------</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button id="copyCodeBtn" class="px-5 py-2.5 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium">Copy Code</button>
+          <button id="shareLinkBtn" class="px-5 py-2.5 bg-white text-primary-700 rounded-full text-sm font-medium">Share Link</button>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50 text-center">
+          <p class="text-3xl font-bold text-primary-700" id="statReferrals">0</p>
+          <p class="text-sm text-gray-500 mt-1">Total Referrals</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50 text-center">
+          <p class="text-3xl font-bold text-green-600" id="statEarned">0 TZS</p>
+          <p class="text-sm text-gray-500 mt-1">Total Earned</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50 text-center">
+          <p class="text-3xl font-bold text-amber-600">10%</p>
+          <p class="text-sm text-gray-500 mt-1">Commission Rate</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50">
+        <h3 class="font-semibold text-lg mb-4">How It Works</h3>
+        <ol class="space-y-2 text-sm text-gray-600">
+          <li>1. Share your unique code or link with friends</li>
+          <li>2. They shop using your code at checkout</li>
+          <li>3. You earn 10% of their first order value</li>
+          <li>4. Withdraw via M-Pesa once you reach TZS 20,000</li>
+        </ol>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50">
+        <h3 class="font-semibold text-lg mb-4">Recent Referrals</h3>
+        <div id="refList" class="space-y-3 text-sm">
+          <p class="text-gray-400">No referrals yet. Start sharing!</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    function formatPrice(n) {
+      return new Intl.NumberFormat('en-TZ').format(n) + ' TZS';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('niffer_token');
+      const localUser = JSON.parse(localStorage.getItem('niffer_user') || 'null');
+
+      if (!token && !localUser) {
+        document.getElementById('loginPrompt').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('refDashboard').classList.remove('hidden');
+
+      try {
+        const res = await window.NifferAPI.getReferralDashboard();
+        const d = res.data;
+        document.getElementById('refCodeDisplay').textContent = d.referralCode;
+        document.getElementById('statReferrals').textContent = d.stats.totalReferrals;
+        document.getElementById('statEarned').textContent = formatPrice(d.stats.totalEarned);
+
+        if (d.commissions?.length) {
+          document.getElementById('refList').innerHTML = d.commissions.map(c => `
+            <div class="flex justify-between items-center p-3 bg-primary-50 rounded-xl">
+              <div>
+                <p class="font-medium">${c.order?.customerName || 'Customer'}</p>
+                <p class="text-xs text-gray-500">${c.order?.orderNumber || ''} • ${new Date(c.createdAt).toLocaleDateString()}</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-green-600">+${formatPrice(c.amount)}</p>
+                <p class="text-xs text-gray-500">${c.status}</p>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        document.getElementById('copyCodeBtn').onclick = () => {
+          navigator.clipboard.writeText(d.referralCode);
+          alert('Copied: ' + d.referralCode);
+        };
+        document.getElementById('shareLinkBtn').onclick = () => {
+          const link = location.origin + location.pathname.replace('referral.html','index.html') + '?ref=' + d.referralCode;
+          navigator.clipboard.writeText(link);
+          alert('Link copied!');
+        };
+      } catch (e) {
+        // Local fallback
+        const code = localUser?.referralCode || 'LOCAL01';
+        document.getElementById('refCodeDisplay').textContent = code;
+        document.getElementById('copyCodeBtn').onclick = () => {
+          navigator.clipboard.writeText(code);
+          alert('Copied!');
+        };
+      }
+    });
+  </script>
+</body>
+</html>

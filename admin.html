@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Niffer Cosmetics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#fdf2f8', 100: '#fce7f3', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' },
+            cream: '#fef7f0'
+          },
+          fontFamily: { display: ['Playfair Display', 'serif'], sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+  <nav class="bg-primary-900 text-white px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="font-display text-lg font-bold">Niffer Admin</a>
+      <span class="text-primary-300 text-sm">Dashboard</span>
+    </div>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="index.html" class="hover:text-primary-200">Storefront</a>
+      <button id="logoutBtn" class="hover:text-primary-200">Logout</button>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div id="loginGate" class="max-w-sm mx-auto bg-white rounded-2xl p-8 shadow text-center">
+      <h1 class="font-display text-2xl font-bold mb-2">Admin Login</h1>
+      <p class="text-sm text-gray-500 mb-6">Use admin account (255700000001 / admin123)</p>
+      <form id="adminLogin" class="space-y-4 text-left">
+        <input name="phone" type="tel" placeholder="Phone" required class="w-full px-4 py-2.5 border rounded-xl">
+        <input name="password" type="password" placeholder="Password" required class="w-full px-4 py-2.5 border rounded-xl">
+        <button class="w-full py-3 bg-primary-600 text-white rounded-xl font-semibold">Login</button>
+      </form>
+      <p id="loginErr" class="text-red-500 text-sm mt-3 hidden"></p>
+    </div>
+
+    <div id="adminPanel" class="hidden space-y-8">
+      <!-- Stats -->
+      <div class="grid sm:grid-cols-4 gap-4" id="statsGrid">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border">
+          <p class="text-sm text-gray-500">Orders</p>
+          <p class="text-2xl font-bold" id="statOrders">—</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border">
+          <p class="text-sm text-gray-500">Products</p>
+          <p class="text-2xl font-bold" id="statProducts">—</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border">
+          <p class="text-sm text-gray-500">Customers</p>
+          <p class="text-2xl font-bold" id="statCustomers">—</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border">
+          <p class="text-sm text-gray-500">Revenue</p>
+          <p class="text-2xl font-bold text-green-600" id="statRevenue">—</p>
+        </div>
+      </div>
+
+      <!-- Low stock -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border">
+        <h2 class="font-semibold text-lg mb-4">Low Stock Alerts</h2>
+        <div id="lowStock" class="text-sm space-y-2"></div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border">
+        <h2 class="font-semibold text-lg mb-4">Recent Orders</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="pb-2">Order</th>
+                <th class="pb-2">Customer</th>
+                <th class="pb-2">Total</th>
+                <th class="pb-2">Status</th>
+                <th class="pb-2">Payment</th>
+                <th class="pb-2">Action</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Products stock -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border">
+        <h2 class="font-semibold text-lg mb-4">Inventory</h2>
+        <div id="inventoryList" class="space-y-2 text-sm"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    function formatPrice(n) {
+      return new Intl.NumberFormat('en-TZ').format(n) + ' TZS';
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await window.NifferAPI.adminDashboard();
+        const d = res.data;
+        document.getElementById('statOrders').textContent = d.stats.orders;
+        document.getElementById('statProducts').textContent = d.stats.products;
+        document.getElementById('statCustomers').textContent = d.stats.customers;
+        document.getElementById('statRevenue').textContent = formatPrice(d.stats.revenue);
+
+        document.getElementById('lowStock').innerHTML = d.lowStock.length
+          ? d.lowStock.map(p => `<div class="flex justify-between p-2 bg-red-50 rounded-lg"><span>${p.nameEn}</span><span class="font-medium text-red-600">${p.stock} left</span></div>`).join('')
+          : '<p class="text-gray-400">All good – no low stock</p>';
+
+        document.getElementById('ordersTable').innerHTML = d.recentOrders.map(o => `
+          <tr class="border-b border-gray-100">
+            <td class="py-3 font-medium">${o.orderNumber}</td>
+            <td class="py-3">${o.customerName}<br><span class="text-xs text-gray-400">${o.customerPhone}</span></td>
+            <td class="py-3">${formatPrice(o.total)}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100">${o.status}</span></td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-xs ${o.paymentStatus==='COMPLETED'?'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}">${o.paymentStatus}</span></td>
+            <td class="py-3">
+              <select onchange="updateStatus('${o.id}', this.value)" class="text-xs border rounded px-2 py-1">
+                <option value="">Update...</option>
+                <option value="PROCESSING">Processing</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </td>
+          </tr>
+        `).join('');
+
+        // Inventory
+        const prods = await window.NifferAPI.adminProducts();
+        document.getElementById('inventoryList').innerHTML = (prods.data || []).map(p => `
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div>
+              <p class="font-medium">${p.nameEn}</p>
+              <p class="text-xs text-gray-400">${p.slug}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="number" value="${p.stock}" min="0" class="w-20 px-2 py-1 border rounded text-center" id="stock-${p.id}">
+              <button onclick="saveStock('${p.id}')" class="px-3 py-1 bg-primary-600 text-white rounded text-xs">Save</button>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('loginGate').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+      } catch (e) {
+        console.error(e);
+        alert('Failed to load admin data. Is the backend running? ' + (e.message || ''));
+      }
+    }
+
+    window.updateStatus = async (id, status) => {
+      if (!status) return;
+      try {
+        await window.NifferAPI.updateOrderStatus(id, status);
+        loadDashboard();
+      } catch (e) { alert(e.message); }
+    };
+
+    window.saveStock = async (id) => {
+      const stock = parseInt(document.getElementById('stock-' + id).value);
+      try {
+        await window.NifferAPI.updateStock(id, stock);
+        alert('Stock updated');
+        loadDashboard();
+      } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('adminLogin').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const err = document.getElementById('loginErr');
+      err.classList.add('hidden');
+      try {
+        const res = await window.NifferAPI.login({ phone: form.phone.value, password: form.password.value });
+        if (res.data.user.role !== 'ADMIN' && res.data.user.role !== 'STAFF') {
+          throw new Error('Not an admin account');
+        }
+        loadDashboard();
+      } catch (ex) {
+        err.textContent = ex.message || 'Login failed';
+        err.classList.remove('hidden');
+      }
+    };
+
+    document.getElementById('logoutBtn').onclick = () => {
+      window.NifferAPI.logout();
+      location.reload();
+    };
+
+    // Auto-load if already logged in as admin
+    (async () => {
+      const token = localStorage.getItem('niffer_token');
+      if (token) {
+        try {
+          const me = await window.NifferAPI.me();
+          if (me.data.role === 'ADMIN' || me.data.role === 'STAFF') loadDashboard();
+        } catch {}
+      }
+    })();
+  </script>
+</body>
+</html>

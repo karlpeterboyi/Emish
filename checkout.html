@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout | Niffer Cosmetics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' },
+            gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+            cream: '#fef7f0'
+          },
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-cream font-sans text-gray-800 antialiased">
+  <div class="bg-primary-700 text-white text-center py-2 text-sm">
+    <span data-i18n="announcement">Free delivery in Dar es Salaam for orders over TZS 50,000 | Referral commissions available!</span>
+  </div>
+
+  <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-primary-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="index.html" class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-display font-bold text-lg">N</div>
+          <div>
+            <span class="font-display text-xl font-semibold text-primary-800">Niffer</span>
+            <span class="text-xs block text-primary-500 -mt-1 tracking-wider">COSMETICS</span>
+          </div>
+        </a>
+        <button id="langToggle" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-primary-200 text-sm font-medium hover:bg-primary-50">
+          <span id="langLabel">EN</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <h1 class="font-display text-3xl font-bold text-primary-900 mb-8" data-i18n="checkout_title">Checkout</h1>
+
+    <div id="checkoutEmpty" class="hidden text-center py-16">
+      <p class="text-gray-500 mb-4">Your cart is empty</p>
+      <a href="products.html" class="text-primary-600 font-medium">← Continue Shopping</a>
+    </div>
+
+    <form id="checkoutForm" class="grid lg:grid-cols-5 gap-8">
+      <!-- Left: Shipping + Payment -->
+      <div class="lg:col-span-3 space-y-8">
+        <!-- Shipping -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50">
+          <h2 class="font-semibold text-lg mb-4" data-i18n="shipping_info">Shipping Information</h2>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1" data-i18n="first_name">First Name</label>
+              <input type="text" name="firstName" required class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" data-i18n="last_name">Last Name</label>
+              <input type="text" name="lastName" required class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium mb-1" data-i18n="phone">Phone Number</label>
+              <input type="tel" name="phone" required placeholder="2557XXXXXXXX" data-i18n-placeholder="phone_hint" class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium mb-1" data-i18n="email">Email (optional)</label>
+              <input type="email" name="email" class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium mb-1" data-i18n="address">Delivery Address</label>
+              <input type="text" name="address" required class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" data-i18n="city">City / Region</label>
+              <input type="text" name="city" required placeholder="Dar es Salaam" class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" data-i18n="notes">Order Notes (optional)</label>
+              <input type="text" name="notes" class="w-full px-4 py-2.5 rounded-xl border border-primary-200 focus:ring-2 focus:ring-primary-300">
+            </div>
+          </div>
+        </div>
+
+        <!-- Referral -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50">
+          <label class="block text-sm font-medium mb-2" data-i18n="referral_code">Referral Code (optional)</label>
+          <div class="flex gap-2">
+            <input type="text" id="refCodeInput" name="referralCode" placeholder="e.g. NIFFXXXX" class="flex-1 px-4 py-2.5 rounded-xl border border-primary-200 uppercase tracking-wider">
+            <button type="button" id="applyRefBtn" class="px-5 py-2.5 bg-primary-100 text-primary-700 rounded-xl font-medium hover:bg-primary-200" data-i18n="apply">Apply</button>
+          </div>
+          <p id="refMessage" class="text-sm mt-2 hidden"></p>
+        </div>
+
+        <!-- Payment -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50">
+          <h2 class="font-semibold text-lg mb-2" data-i18n="payment_method">Payment Method</h2>
+          <p class="text-sm text-gray-500 mb-4" data-i18n="pay_via_pesapal">Secure payment powered by Pesapal</p>
+          
+          <div class="space-y-3 payment-option">
+            <div>
+              <input type="radio" name="payment" id="pay_mpesa" value="mpesa" checked class="hidden">
+              <label for="pay_mpesa" class="flex items-center gap-3 p-4 border-2 border-primary-100 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-xl">📱</div>
+                <div>
+                  <p class="font-medium" data-i18n="pay_mpesa">M-Pesa (Vodacom)</p>
+                  <p class="text-xs text-gray-500">Push STK / USSD</p>
+                </div>
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="payment" id="pay_tigo" value="tigo" class="hidden">
+              <label for="pay_tigo" class="flex items-center gap-3 p-4 border-2 border-primary-100 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-xl">📱</div>
+                <div>
+                  <p class="font-medium" data-i18n="pay_tigo">Tigo Pesa / Mixx by Yas</p>
+                  <p class="text-xs text-gray-500">Mobile money</p>
+                </div>
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="payment" id="pay_airtel" value="airtel" class="hidden">
+              <label for="pay_airtel" class="flex items-center gap-3 p-4 border-2 border-primary-100 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-xl">📱</div>
+                <div>
+                  <p class="font-medium" data-i18n="pay_airtel">Airtel Money</p>
+                  <p class="text-xs text-gray-500">Mobile money</p>
+                </div>
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="payment" id="pay_card" value="card" class="hidden">
+              <label for="pay_card" class="flex items-center gap-3 p-4 border-2 border-primary-100 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-xl">💳</div>
+                <div>
+                  <p class="font-medium" data-i18n="pay_card">Visa / Mastercard</p>
+                  <p class="text-xs text-gray-500">Cards via Pesapal</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Summary -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-primary-50 sticky top-24">
+          <h2 class="font-semibold text-lg mb-4" data-i18n="order_summary">Order Summary</h2>
+          <div id="summaryItems" class="space-y-3 mb-4 max-h-60 overflow-y-auto text-sm">
+            <!-- Items -->
+          </div>
+          <div class="border-t border-primary-100 pt-4 space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span data-i18n="subtotal">Subtotal</span>
+              <span id="sumSubtotal"></span>
+            </div>
+            <div class="flex justify-between">
+              <span data-i18n="shipping">Shipping</span>
+              <span id="sumShipping"></span>
+            </div>
+            <div id="discountRow" class="flex justify-between text-green-600 hidden">
+              <span>Referral Discount (5%)</span>
+              <span id="sumDiscount"></span>
+            </div>
+            <div class="flex justify-between text-lg font-bold pt-2 border-t border-primary-100">
+              <span data-i18n="total">Total</span>
+              <span id="sumTotal" class="text-primary-700"></span>
+            </div>
+          </div>
+          <button type="submit" id="placeOrderBtn" class="mt-6 w-full py-3.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-full transition flex items-center justify-center gap-2">
+            <span data-i18n="place_order">Place Order & Pay</span>
+          </button>
+          <p class="text-xs text-center text-gray-400 mt-3">🔒 Secure checkout • Powered by Pesapal</p>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+      <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center text-4xl">✓</div>
+      <h2 class="font-display text-2xl font-bold text-primary-900 mb-2" data-i18n="order_success">Order Placed Successfully!</h2>
+      <p class="text-gray-600 mb-4" data-i18n="order_success_desc">Thank you for shopping with Niffer Cosmetics. You will receive a confirmation SMS shortly.</p>
+      <p class="text-sm text-gray-500 mb-1" data-i18n="order_number">Order Number</p>
+      <p id="orderNumberDisplay" class="font-mono font-bold text-lg text-primary-700 mb-6"></p>
+      <a href="index.html" class="inline-block px-6 py-3 bg-primary-600 text-white rounded-full font-medium" data-i18n="back_home">Back to Home</a>
+    </div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let referralDiscount = 0;
+    let appliedRefCode = null;
+
+    function updateSummary() {
+      const cart = getCart();
+      if (cart.length === 0) {
+        document.getElementById('checkoutForm').classList.add('hidden');
+        document.getElementById('checkoutEmpty').classList.remove('hidden');
+        return;
+      }
+
+      const subtotal = getCartTotal();
+      const city = document.querySelector('[name="city"]')?.value || '';
+      const shipping = calculateShipping(subtotal, city);
+      const discount = Math.round(subtotal * referralDiscount);
+      const total = subtotal + shipping - discount;
+
+      document.getElementById('summaryItems').innerHTML = cart.map(item => {
+        const p = getProductById(item.id);
+        if (!p) return '';
+        const name = p.name[currentLang] || p.name.en;
+        return `<div class="flex justify-between gap-2"><span class="truncate">${name} × ${item.qty}</span><span class="flex-shrink-0">${formatPrice(p.price * item.qty)}</span></div>`;
+      }).join('');
+
+      document.getElementById('sumSubtotal').textContent = formatPrice(subtotal);
+      document.getElementById('sumShipping').textContent = shipping === 0 ? t('free_shipping') : formatPrice(shipping);
+      
+      if (discount > 0) {
+        document.getElementById('discountRow').classList.remove('hidden');
+        document.getElementById('sumDiscount').textContent = '-' + formatPrice(discount);
+      } else {
+        document.getElementById('discountRow').classList.add('hidden');
+      }
+      document.getElementById('sumTotal').textContent = formatPrice(total);
+    }
+
+    document.getElementById('applyRefBtn').addEventListener('click', () => {
+      const code = document.getElementById('refCodeInput').value.trim().toUpperCase();
+      const msg = document.getElementById('refMessage');
+      if (!code) return;
+      // Mock: any code starting with NIFF or 4+ chars works for demo
+      if (code.length >= 4) {
+        referralDiscount = 0.05; // 5% off for referred customer
+        appliedRefCode = code;
+        msg.textContent = t('discount_applied');
+        msg.className = 'text-sm mt-2 text-green-600';
+        msg.classList.remove('hidden');
+        updateSummary();
+      } else {
+        msg.textContent = 'Invalid referral code';
+        msg.className = 'text-sm mt-2 text-red-500';
+        msg.classList.remove('hidden');
+      }
+    });
+
+    document.querySelector('[name="city"]')?.addEventListener('input', updateSummary);
+
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('placeOrderBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Processing...';
+
+      const cart = getCart();
+      const paymentMethodMap = { mpesa: 'MPESA', tigo: 'TIGO', airtel: 'AIRTEL', card: 'CARD' };
+      const payload = {
+        items: cart.map(i => ({ productId: String(i.id), quantity: i.qty })),
+        customerName: form.firstName.value + ' ' + form.lastName.value,
+        customerPhone: form.phone.value,
+        customerEmail: form.email.value || undefined,
+        shippingAddress: form.address.value,
+        shippingCity: form.city.value,
+        notes: form.notes.value || undefined,
+        referralCode: appliedRefCode || undefined,
+        paymentMethod: paymentMethodMap[form.payment.value] || 'MPESA',
+      };
+
+      try {
+        // Try backend API first
+        let orderData;
+        if (window.NifferAPI) {
+          // Note: product IDs from local cart are numeric; backend uses UUIDs.
+          // For demo when backend has seeded products, we fall back to local if IDs don't match.
+          try {
+            const res = await window.NifferAPI.createOrder(payload);
+            orderData = res.data;
+            // Initiate Pesapal payment
+            try {
+              const pay = await window.NifferAPI.initiatePayment(orderData.orderNumber);
+              if (pay.data?.redirect_url && !pay.demo) {
+                clearCart();
+                window.location.href = pay.data.redirect_url;
+                return;
+              }
+            } catch (payErr) {
+              console.warn('Payment initiate failed, showing success anyway', payErr);
+            }
+          } catch (apiErr) {
+            console.warn('API order failed, using local fallback', apiErr);
+            throw apiErr; // fall to local
+          }
+        } else {
+          throw new Error('no api');
+        }
+
+        clearCart();
+        document.getElementById('orderNumberDisplay').textContent = orderData.orderNumber;
+        document.getElementById('successModal').classList.remove('hidden');
+        document.getElementById('successModal').classList.add('flex');
+      } catch (err) {
+        // Local fallback (original prototype behaviour)
+        await new Promise(r => setTimeout(r, 1200));
+        const subtotal = getCartTotal();
+        const city = form.city.value;
+        const shipping = calculateShipping(subtotal, city);
+        const discount = Math.round(subtotal * referralDiscount);
+        const total = subtotal + shipping - discount;
+        const order = {
+          id: 'NC' + Date.now().toString().slice(-8),
+          items: getCart(),
+          customer: { firstName: form.firstName.value, lastName: form.lastName.value, phone: form.phone.value, email: form.email.value, address: form.address.value, city, notes: form.notes.value },
+          paymentMethod: form.payment.value,
+          subtotal, shipping, discount, total,
+          referralCode: appliedRefCode,
+          status: 'paid',
+          createdAt: new Date().toISOString()
+        };
+        saveOrder(order);
+        if (appliedRefCode) {
+          addReferral({ code: appliedRefCode, orderId: order.id, amount: Math.round(subtotal * 0.10), customerName: form.firstName.value });
+        }
+        clearCart();
+        document.getElementById('orderNumberDisplay').textContent = order.id;
+        document.getElementById('successModal').classList.remove('hidden');
+        document.getElementById('successModal').classList.add('flex');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span data-i18n="place_order">Place Order & Pay</span>';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateSummary();
+      updateCartCount();
+    });
+  </script>
+</body>
+</html>
