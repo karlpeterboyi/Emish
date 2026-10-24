@@ -1,4 +1,4 @@
-# Niffer Cosmetics Backend API
+# Emish Beauty Spa Backend API
 
 Production-ready Node.js + Express + TypeScript + Prisma API for the Tanzania beauty e-commerce platform.
 

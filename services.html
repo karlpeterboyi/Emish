@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services | Emish Beauty Spa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { primary: {50:'#fdf2f8',100:'#fce7f3',200:'#fbcfe8',300:'#f9a8d4',400:'#f472b6',500:'#ec4899',600:'#db2777',700:'#be185d',800:'#9d174d',900:'#831843'}, cream:'#fef7f0' },
+      fontFamily: { display:['Playfair Display','serif'], sans:['Inter','system-ui','sans-serif'] }
+    }}}
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+</head>
+<body class="bg-cream font-sans text-gray-800">
+  <div class="bg-primary-700 text-white text-center py-2 text-sm">Spa · Skincare · Hair · Book online</div>
+  <nav class="sticky top-0 z-50 bg-white/95 border-b border-primary-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+      <a href="index.html" class="font-display text-xl font-semibold text-primary-800">Emish <span class="text-primary-500 text-sm">Beauty Spa</span></a>
+      <div class="hidden md:flex gap-6 text-sm">
+        <a href="index.html" class="text-gray-600 hover:text-primary-600">Home</a>
+        <a href="products.html" class="text-gray-600 hover:text-primary-600">Shop</a>
+        <a href="services.html" class="text-primary-700 font-medium">Services</a>
+        <a href="booking.html" class="text-gray-600 hover:text-primary-600">Book</a>
+      </div>
+      <a href="booking.html" class="px-4 py-2 bg-primary-600 text-white rounded-full text-sm font-medium">Book now</a>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 py-10">
+    <h1 class="font-display text-3xl md:text-4xl font-bold text-primary-900 mb-2">Our Services</h1>
+    <p class="text-gray-600 mb-8">Massage, waxing, facials & more — book your appointment at Emish Beauty Spa (Tanzania).</p>
+    <div id="serviceFilters" class="flex flex-wrap gap-2 mb-8"></div>
+    <div id="servicesGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <p class="text-gray-500 col-span-full">Loading services...</p>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    var API = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+    var allServices = [];
+    var currentCat = 'all';
+
+    function formatPrice(n) {
+      return new Intl.NumberFormat('en-TZ').format(n) + ' TZS';
+    }
+
+    function render() {
+      var list = currentCat === 'all' ? allServices : allServices.filter(function(s) {
+        return (s.category && s.category.slug) === currentCat;
+      });
+      var grid = document.getElementById('servicesGrid');
+      if (!list.length) {
+        grid.innerHTML = '<p class="text-gray-500">No services found. Is the backend running and seeded?</p>';
+        return;
+      }
+      grid.innerHTML = list.map(function(s) {
+        var img = '';
+        if ((s.slug || '').indexOf('facial') >= 0 || (s.nameEn || '').toLowerCase().indexOf('facial') >= 0) img = 'images/services/facial.webp';
+        if ((s.slug || '').indexOf('body') >= 0 || (s.nameEn || '').toLowerCase().indexOf('contour') >= 0) img = 'images/services/body-contour.webp';
+        return '<div class="bg-white rounded-2xl border border-primary-50 shadow-sm overflow-hidden flex flex-col">' +
+          (img ? '<img src="' + img + '" class="w-full h-40 object-cover" alt="">' : '') +
+          '<div class="p-5 flex-1">' +
+            '<p class="text-xs uppercase text-primary-500 mb-1">' + ((s.category && s.category.nameEn) || '') + '</p>' +
+            '<h3 class="font-semibold text-lg text-gray-900 mb-2">' + s.nameEn + '</h3>' +
+            '<p class="text-sm text-gray-600 mb-3 line-clamp-3">' + (s.descriptionEn || '') + '</p>' +
+            '<p class="text-sm text-gray-500">' + s.durationMinutes + ' min</p>' +
+          '</div>' +
+          '<div class="px-5 pb-5 flex items-center justify-between">' +
+            '<span class="font-bold text-primary-700">' + formatPrice(s.price) + '</span>' +
+            '<a href="booking.html?service=' + encodeURIComponent(s.slug) + '" class="px-4 py-2 bg-primary-600 text-white rounded-full text-sm font-medium hover:bg-primary-700">Book</a>' +
+          '</div></div>';
+      }).join('');
+    }
+
+    async function load() {
+      try {
+        var r = await fetch(API + '/services');
+        var j = await r.json();
+        allServices = j.data || [];
+        var cats = [{ slug: 'all', nameEn: 'All' }];
+        allServices.forEach(function(s) {
+          if (s.category && !cats.find(function(c){ return c.slug === s.category.slug; })) {
+            cats.push(s.category);
+          }
+        });
+        document.getElementById('serviceFilters').innerHTML = cats.map(function(c) {
+          return '<button data-cat="' + c.slug + '" class="filter px-4 py-1.5 rounded-full border text-sm ' +
+            (c.slug === 'all' ? 'bg-primary-600 text-white border-primary-600' : 'bg-white border-primary-200') + '">' +
+            (c.nameEn || c.slug) + '</button>';
+        }).join('');
+        document.querySelectorAll('.filter').forEach(function(btn) {
+          btn.onclick = function() {
+            currentCat = btn.getAttribute('data-cat');
+            document.querySelectorAll('.filter').forEach(function(b) {
+              var on = b.getAttribute('data-cat') === currentCat;
+              b.className = 'filter px-4 py-1.5 rounded-full border text-sm ' + (on ? 'bg-primary-600 text-white border-primary-600' : 'bg-white border-primary-200');
+            });
+            render();
+          };
+        });
+        render();
+      } catch (e) {
+        document.getElementById('servicesGrid').innerHTML =
+          '<p class="text-red-600">Could not load services. Start backend: <code>npm run dev</code> in backend folder.</p>';
+      }
+    }
+    load();
+  </script>
+
+<footer class="bg-primary-900 text-primary-100 py-8 mt-12 text-center text-sm">
+  <p class="font-semibold text-white">Emish Beauty Spa</p>
+  <p>Dar · Arusha · Dodoma · 0672 283 434 · 0746 541 544</p>
+  <p><a class="underline" href="https://instagram.com/emishbeautyspa">@emishbeautyspa</a></p>
+</footer>
+  <script src="js/footer.js"></script>
+</body>
+</html>

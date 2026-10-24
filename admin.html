@@ -3,212 +3,559 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin | Niffer Cosmetics</title>
+  <title>Admin Panel | Emish Beauty Spa</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: { 50: '#fdf2f8', 100: '#fce7f3', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' },
-            cream: '#fef7f0'
-          },
-          fontFamily: { display: ['Playfair Display', 'serif'], sans: ['Inter', 'system-ui', 'sans-serif'] }
-        }
-      }
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Admin panel — self-contained, no storefront nav */
+    :root {
+      --admin-pink: #db2777;
+      --admin-pink-dark: #9d174d;
+      --admin-bg: #f8fafc;
     }
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    body.admin-body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--admin-bg);
+      color: #1e293b;
+      margin: 0;
+      min-height: 100vh;
+    }
+    .tab {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .tab.active {
+      border-bottom: 2px solid var(--admin-pink);
+      color: var(--admin-pink-dark);
+      font-weight: 600;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    #gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: linear-gradient(160deg, #fdf2f8 0%, #f8fafc 50%, #fce7f3 100%);
+    }
+    #gate.hidden { display: none !important; }
+    #app.hidden { display: none !important; }
+    .admin-login-card {
+      background: #fff;
+      width: 100%;
+      max-width: 24rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 40px rgba(157, 23, 77, 0.12);
+      padding: 1.5rem;
+      border: 1px solid #fce7f3;
+    }
+    .admin-login-card input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+    .admin-login-card input:focus {
+      outline: 2px solid #f9a8d4;
+      border-color: #db2777;
+    }
+    .admin-btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background: #db2777;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .admin-btn-primary:hover { background: #be185d; }
+    .admin-header {
+      background: linear-gradient(90deg, #831843, #9d174d 40%, #be185d);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .admin-header img {
+      height: 2rem;
+      background: #fff;
+      border-radius: 0.25rem;
+      padding: 0.15rem 0.35rem;
+    }
+    .admin-tabs {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 0.25rem;
+    }
+    .admin-tabs .tab { padding: 0.85rem 0.9rem; }
+    .admin-main {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    .admin-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+    }
+    .admin-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .admin-card th {
+      background: #f8fafc;
+      text-align: left;
+      padding: 0.5rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .admin-card td { padding: 0.5rem; border-top: 1px solid #f1f5f9; vertical-align: middle; }
+    .admin-card input[type="number"],
+    .admin-card input:not([type]),
+    .admin-card select {
+      border: 1px solid #e2e8f0;
+      border-radius: 0.35rem;
+      padding: 0.25rem 0.4rem;
+      max-width: 100%;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    @media (min-width: 768px) {
+      .stat-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #fce7f3;
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+    .stat-card p:first-child { font-size: 0.75rem; color: #64748b; margin: 0 0 0.25rem; }
+    .stat-card p:last-child { font-size: 1.35rem; font-weight: 700; color: #be185d; margin: 0; }
+    #err:not(.hidden) { display: block; color: #dc2626; font-size: 0.8rem; margin-bottom: 0.5rem; }
+  </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800">
-  <nav class="bg-primary-900 text-white px-4 py-3 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <a href="index.html" class="font-display text-lg font-bold">Niffer Admin</a>
-      <span class="text-primary-300 text-sm">Dashboard</span>
-    </div>
-    <div class="flex items-center gap-4 text-sm">
-      <a href="index.html" class="hover:text-primary-200">Storefront</a>
-      <button id="logoutBtn" class="hover:text-primary-200">Logout</button>
-    </div>
-  </nav>
-
-  <main class="max-w-6xl mx-auto px-4 py-8">
-    <div id="loginGate" class="max-w-sm mx-auto bg-white rounded-2xl p-8 shadow text-center">
-      <h1 class="font-display text-2xl font-bold mb-2">Admin Login</h1>
-      <p class="text-sm text-gray-500 mb-6">Use admin account (255700000001 / admin123)</p>
-      <form id="adminLogin" class="space-y-4 text-left">
-        <input name="phone" type="tel" placeholder="Phone" required class="w-full px-4 py-2.5 border rounded-xl">
-        <input name="password" type="password" placeholder="Password" required class="w-full px-4 py-2.5 border rounded-xl">
-        <button class="w-full py-3 bg-primary-600 text-white rounded-xl font-semibold">Login</button>
-      </form>
-      <p id="loginErr" class="text-red-500 text-sm mt-3 hidden"></p>
-    </div>
-
-    <div id="adminPanel" class="hidden space-y-8">
-      <!-- Stats -->
-      <div class="grid sm:grid-cols-4 gap-4" id="statsGrid">
-        <div class="bg-white rounded-2xl p-5 shadow-sm border">
-          <p class="text-sm text-gray-500">Orders</p>
-          <p class="text-2xl font-bold" id="statOrders">—</p>
-        </div>
-        <div class="bg-white rounded-2xl p-5 shadow-sm border">
-          <p class="text-sm text-gray-500">Products</p>
-          <p class="text-2xl font-bold" id="statProducts">—</p>
-        </div>
-        <div class="bg-white rounded-2xl p-5 shadow-sm border">
-          <p class="text-sm text-gray-500">Customers</p>
-          <p class="text-2xl font-bold" id="statCustomers">—</p>
-        </div>
-        <div class="bg-white rounded-2xl p-5 shadow-sm border">
-          <p class="text-sm text-gray-500">Revenue</p>
-          <p class="text-2xl font-bold text-green-600" id="statRevenue">—</p>
+<body class="admin-body">
+  <!-- LOGIN -->
+  <div id="gate">
+    <div class="admin-login-card">
+      <div class="flex items-center gap-3 mb-6">
+        <img src="images/brand/logo.jpg" alt="Emish" class="h-12 object-contain">
+        <div>
+          <h1 class="text-lg font-bold text-pink-800">Emish Admin Panel</h1>
+          <p class="text-xs text-slate-500">Products · Services · Bookings · Referrals</p>
         </div>
       </div>
-
-      <!-- Low stock -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border">
-        <h2 class="font-semibold text-lg mb-4">Low Stock Alerts</h2>
-        <div id="lowStock" class="text-sm space-y-2"></div>
-      </div>
-
-      <!-- Recent Orders -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border">
-        <h2 class="font-semibold text-lg mb-4">Recent Orders</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-gray-500 border-b">
-                <th class="pb-2">Order</th>
-                <th class="pb-2">Customer</th>
-                <th class="pb-2">Total</th>
-                <th class="pb-2">Status</th>
-                <th class="pb-2">Payment</th>
-                <th class="pb-2">Action</th>
-              </tr>
-            </thead>
-            <tbody id="ordersTable"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Products stock -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border">
-        <h2 class="font-semibold text-lg mb-4">Inventory</h2>
-        <div id="inventoryList" class="space-y-2 text-sm"></div>
-      </div>
+      <label class="block text-xs mb-1">Phone</label>
+      <input id="phone" class="w-full border rounded-lg px-3 py-2 mb-3" value="255700000001">
+      <label class="block text-xs mb-1">Password</label>
+      <input id="pass" type="password" class="w-full border rounded-lg px-3 py-2 mb-3" value="admin123">
+      <p id="err" class="text-red-600 text-xs mb-2 hidden"></p>
+      <button id="btnLogin" class="admin-btn-primary">Sign in to Admin</button>
+      <p class="text-xs text-slate-400 mt-3 text-center">Not the Account page — this is full CRUD admin.</p>
     </div>
-  </main>
+  </div>
 
-  <script src="js/api.js"></script>
+  <!-- APP -->
+  <div id="app" class="hidden min-h-screen">
+    <header class="admin-header">
+      <div class="flex items-center gap-2">
+        <img src="images/brand/logo.jpg" class="h-8 bg-white rounded px-1" alt="">
+        <strong>Emish Admin</strong>
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        <span id="who"></span>
+        <a href="index.html" class="underline">Store</a>
+        <button id="btnOut" class="bg-white/15 px-2 py-1 rounded">Logout</button>
+      </div>
+    </header>
+
+    <div class="admin-tabs">
+      <button class="tab active px-4 py-3 whitespace-nowrap" data-p="dash">Dashboard</button>
+      <button class="tab px-4 py-3 whitespace-nowrap" data-p="products">Products</button>
+      <button class="tab px-4 py-3 whitespace-nowrap" data-p="services">Services</button>
+      <button class="tab px-4 py-3 whitespace-nowrap" data-p="bookings">Bookings</button>
+      <button class="tab px-4 py-3 whitespace-nowrap" data-p="orders">Orders</button>
+      <button class="tab px-4 py-3 whitespace-nowrap" data-p="referrals">Referrals</button>
+      <button class="tab px-4 py-3 whitespace-nowrap" data-p="settings">Settings</button>
+    </div>
+
+    <main class="admin-main">
+      <section id="p-dash" class="panel active">
+        <h2 class="font-bold text-lg mb-3">Dashboard</h2>
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+      </section>
+
+      <section id="p-products" class="panel">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-lg">Products CRUD</h2>
+          <button id="newProduct" class="bg-pink-600 text-white px-3 py-2 rounded-lg text-xs">+ Add</button>
+        </div>
+        <div id="productFormBox" class="hidden bg-white border rounded-xl p-4 mb-3 space-y-2"></div>
+        <div id="productTable" class="bg-white border rounded-xl overflow-x-auto"></div>
+      </section>
+
+      <section id="p-services" class="panel">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-lg">Services CRUD</h2>
+          <button id="newService" class="bg-pink-600 text-white px-3 py-2 rounded-lg text-xs">+ Add</button>
+        </div>
+        <div id="serviceFormBox" class="hidden bg-white border rounded-xl p-4 mb-3 space-y-2"></div>
+        <div id="serviceTable" class="bg-white border rounded-xl overflow-x-auto"></div>
+      </section>
+
+      <section id="p-bookings" class="panel">
+        <h2 class="font-bold text-lg mb-3">Bookings</h2>
+        <div id="bookingTable" class="bg-white border rounded-xl overflow-x-auto"></div>
+      </section>
+
+      <section id="p-orders" class="panel">
+        <h2 class="font-bold text-lg mb-3">Orders</h2>
+        <div id="orderTable" class="bg-white border rounded-xl overflow-x-auto"></div>
+      </section>
+
+      <section id="p-referrals" class="panel">
+        <h2 class="font-bold text-lg mb-3">Referral commissions</h2>
+        <p class="text-xs text-slate-500 mb-3">Products & services · default 5% · change in Settings</p>
+        <div id="commTable" class="bg-white border rounded-xl overflow-x-auto"></div>
+      </section>
+
+      <section id="p-settings" class="panel">
+        <h2 class="font-bold text-lg mb-3">Settings</h2>
+        <div class="bg-white border rounded-xl p-4 max-w-md space-y-3">
+          <label class="block text-xs">Product referral commission (e.g. 0.05 = 5%)</label>
+          <input id="rateProd" class="w-full border rounded-lg px-3 py-2" type="number" step="0.01" min="0" max="1">
+          <label class="block text-xs">Service referral commission (e.g. 0.05 = 5%)</label>
+          <input id="rateSvc" class="w-full border rounded-lg px-3 py-2" type="number" step="0.01" min="0" max="1">
+          <button id="saveSettings" class="w-full py-2.5 bg-pink-600 text-white rounded-lg font-medium">Save rates</button>
+          <p id="setMsg" class="text-xs text-green-700 hidden">Saved</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
   <script>
-    function formatPrice(n) {
-      return new Intl.NumberFormat('en-TZ').format(n) + ' TZS';
+    var API = localStorage.getItem('emish_api_url') || 'http://localhost:4000/api';
+    function tok() { return localStorage.getItem('emish_token') || localStorage.getItem('niffer_token') || ''; }
+    function money(n) { return new Intl.NumberFormat('en-TZ').format(n||0) + ' TZS'; }
+    async function api(path, opts) {
+      opts = opts || {};
+      var h = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      if (tok()) h.Authorization = 'Bearer ' + tok();
+      var r = await fetch(API + path, Object.assign({}, opts, { headers: h }));
+      var j = await r.json().catch(function(){ return {}; });
+      if (!r.ok) throw new Error(j.error || j.message || ('Error ' + r.status));
+      return j;
     }
 
-    async function loadDashboard() {
-      try {
-        const res = await window.NifferAPI.adminDashboard();
-        const d = res.data;
-        document.getElementById('statOrders').textContent = d.stats.orders;
-        document.getElementById('statProducts').textContent = d.stats.products;
-        document.getElementById('statCustomers').textContent = d.stats.customers;
-        document.getElementById('statRevenue').textContent = formatPrice(d.stats.revenue);
-
-        document.getElementById('lowStock').innerHTML = d.lowStock.length
-          ? d.lowStock.map(p => `<div class="flex justify-between p-2 bg-red-50 rounded-lg"><span>${p.nameEn}</span><span class="font-medium text-red-600">${p.stock} left</span></div>`).join('')
-          : '<p class="text-gray-400">All good – no low stock</p>';
-
-        document.getElementById('ordersTable').innerHTML = d.recentOrders.map(o => `
-          <tr class="border-b border-gray-100">
-            <td class="py-3 font-medium">${o.orderNumber}</td>
-            <td class="py-3">${o.customerName}<br><span class="text-xs text-gray-400">${o.customerPhone}</span></td>
-            <td class="py-3">${formatPrice(o.total)}</td>
-            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100">${o.status}</span></td>
-            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-xs ${o.paymentStatus==='COMPLETED'?'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}">${o.paymentStatus}</span></td>
-            <td class="py-3">
-              <select onchange="updateStatus('${o.id}', this.value)" class="text-xs border rounded px-2 py-1">
-                <option value="">Update...</option>
-                <option value="PROCESSING">Processing</option>
-                <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
-            </td>
-          </tr>
-        `).join('');
-
-        // Inventory
-        const prods = await window.NifferAPI.adminProducts();
-        document.getElementById('inventoryList').innerHTML = (prods.data || []).map(p => `
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-            <div>
-              <p class="font-medium">${p.nameEn}</p>
-              <p class="text-xs text-gray-400">${p.slug}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <input type="number" value="${p.stock}" min="0" class="w-20 px-2 py-1 border rounded text-center" id="stock-${p.id}">
-              <button onclick="saveStock('${p.id}')" class="px-3 py-1 bg-primary-600 text-white rounded text-xs">Save</button>
-            </div>
-          </div>
-        `).join('');
-
-        document.getElementById('loginGate').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-      } catch (e) {
-        console.error(e);
-        alert('Failed to load admin data. Is the backend running? ' + (e.message || ''));
+    function openApp(user) {
+      document.getElementById('gate').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('who').textContent = ((user && user.name) || 'Admin') + (user && user.role ? ' · ' + user.role : '');
+      window.__emishRole = (user && user.role) || '';
+      if (window.__emishRole === 'CASHIER') {
+        document.querySelectorAll('.tab').forEach(function(b){
+          if (['settings','referrals'].indexOf(b.dataset.p)>=0) b.style.display='none';
+        });
       }
+      loadDash();
     }
 
-    window.updateStatus = async (id, status) => {
-      if (!status) return;
-      try {
-        await window.NifferAPI.updateOrderStatus(id, status);
-        loadDashboard();
-      } catch (e) { alert(e.message); }
-    };
-
-    window.saveStock = async (id) => {
-      const stock = parseInt(document.getElementById('stock-' + id).value);
-      try {
-        await window.NifferAPI.updateStock(id, stock);
-        alert('Stock updated');
-        loadDashboard();
-      } catch (e) { alert(e.message); }
-    };
-
-    document.getElementById('adminLogin').onsubmit = async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const err = document.getElementById('loginErr');
+    document.getElementById('btnLogin').onclick = async function() {
+      var err = document.getElementById('err');
       err.classList.add('hidden');
       try {
-        const res = await window.NifferAPI.login({ phone: form.phone.value, password: form.password.value });
-        if (res.data.user.role !== 'ADMIN' && res.data.user.role !== 'STAFF') {
-          throw new Error('Not an admin account');
-        }
-        loadDashboard();
-      } catch (ex) {
-        err.textContent = ex.message || 'Login failed';
+        var j = await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            phone: document.getElementById('phone').value.trim(),
+            password: document.getElementById('pass').value
+          })
+        });
+        var data = j.data || j;
+        var token = data.token;
+        var user = data.user;
+        if (!token) throw new Error('Login failed');
+        var okRoles = ['ADMIN','SUPER_ADMIN','BRANCH_MANAGER','CASHIER','STAFF'];
+        if (!user || okRoles.indexOf(user.role) < 0) throw new Error('Staff account required');
+        localStorage.setItem('emish_token', token);
+        localStorage.setItem('emish_user', JSON.stringify(user));
+        openApp(user);
+      } catch (e) {
+        err.textContent = e.message;
         err.classList.remove('hidden');
       }
     };
-
-    document.getElementById('logoutBtn').onclick = () => {
-      window.NifferAPI.logout();
+    document.getElementById('btnOut').onclick = function() {
+      localStorage.removeItem('emish_token');
+      localStorage.removeItem('niffer_token');
       location.reload();
     };
 
-    // Auto-load if already logged in as admin
-    (async () => {
-      const token = localStorage.getItem('niffer_token');
-      if (token) {
-        try {
-          const me = await window.NifferAPI.me();
-          if (me.data.role === 'ADMIN' || me.data.role === 'STAFF') loadDashboard();
-        } catch {}
+    document.querySelectorAll('.tab').forEach(function(btn) {
+      btn.onclick = function() {
+        document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+        document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('p-' + btn.dataset.p).classList.add('active');
+        var p = btn.dataset.p;
+        if (p === 'dash') loadDash();
+        if (p === 'products') loadProducts();
+        if (p === 'services') loadServices();
+        if (p === 'bookings') loadBookings();
+        if (p === 'orders') loadOrders();
+        if (p === 'referrals') loadComms();
+        if (p === 'settings') loadSettings();
+      };
+    });
+
+    async function loadDash() {
+      var el = document.getElementById('stats');
+      try {
+        var j = await api('/admin/dashboard');
+        var d = j.data || {};
+        el.innerHTML = [
+          ['Products', d.products],
+          ['Services', d.services],
+          ['Bookings', d.bookings],
+          ['Orders', d.orders],
+          ['Revenue', money(d.revenue)],
+          ['Pending commissions', money(d.pendingCommissions)],
+          ['Product ref %', ((d.commissionRateProducts||0.05)*100).toFixed(0) + '%'],
+          ['Service ref %', ((d.commissionRateServices||0.05)*100).toFixed(0) + '%']
+        ].map(function(x){
+          return '<div class="bg-white border rounded-xl p-4"><p class="text-xs text-slate-500">'+x[0]+'</p><p class="text-xl font-bold text-pink-700">'+x[1]+'</p></div>';
+        }).join('');
+      } catch (e) {
+        el.innerHTML = '<p class="text-red-600">'+e.message+'</p><p class="text-xs mt-2">Is backend running on port 4000?</p>';
       }
-    })();
+    }
+
+    async function loadProducts() {
+      var box = document.getElementById('productTable');
+      box.innerHTML = 'Loading…';
+      try {
+        var j = await api('/admin/products');
+        var rows = (j.data||[]).map(function(p){
+          return '<tr class="border-t">'+
+            '<td class="p-2">'+p.nameEn+'</td>'+
+            '<td class="p-2 text-xs">'+p.slug+'</td>'+
+            '<td class="p-2"><input data-id="'+p.id+'" class="price w-24 border rounded px-1" type="number" value="'+p.price+'"></td>'+
+            '<td class="p-2"><input data-id="'+p.id+'" class="stock w-16 border rounded px-1" value="'+p.stock+'"></td>'+
+            '<td class="p-2 text-xs">'+(p.isActive?'Active':'Off')+'</td>'+
+            '<td class="p-2 space-x-1">'+
+              '<button data-id="'+p.id+'" class="saveP text-pink-600 text-xs font-medium">Update</button>'+
+              '<button data-id="'+p.id+'" class="delP text-red-600 text-xs">Delete</button>'+
+            '</td></tr>';
+        }).join('');
+        box.innerHTML = '<table class="w-full text-left"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Name</th><th class="p-2">Slug</th><th class="p-2">Price</th><th class="p-2">Stock</th><th class="p-2">Status</th><th class="p-2"></th></tr></thead><tbody>'+rows+'</tbody></table>';
+        box.querySelectorAll('.saveP').forEach(function(b){
+          b.onclick = async function(){
+            var stock = box.querySelector('input.stock[data-id="'+b.dataset.id+'"]');
+            var price = box.querySelector('input.price[data-id="'+b.dataset.id+'"]');
+            await api('/products/'+b.dataset.id, { method:'PATCH', body: JSON.stringify({
+              stock: parseInt(stock.value,10),
+              price: parseInt(price.value,10)
+            }) });
+            loadProducts();
+          };
+        });
+        box.querySelectorAll('.delP').forEach(function(b){
+          b.onclick = async function(){
+            if (!confirm('Disable product?')) return;
+            await api('/products/'+b.dataset.id, { method:'DELETE' });
+            loadProducts();
+          };
+        });
+      } catch(e) { box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+    }
+
+    document.getElementById('newProduct').onclick = async function() {
+      var cats = [];
+      try { cats = (await api('/admin/categories')).data || []; } catch(e) {}
+      var box = document.getElementById('productFormBox');
+      box.classList.remove('hidden');
+      var catOpts = cats.map(function(c){ return '<option value="'+c.id+'">'+c.nameEn+'</option>'; }).join('');
+      box.innerHTML =
+        '<input id="np_name" class="w-full border rounded px-2 py-1" placeholder="Name EN">'+
+        '<input id="np_slug" class="w-full border rounded px-2 py-1" placeholder="slug">'+
+        '<input id="np_price" type="number" class="w-full border rounded px-2 py-1" placeholder="Price">'+
+        '<input id="np_stock" type="number" class="w-full border rounded px-2 py-1" placeholder="Stock" value="10">'+
+        '<select id="np_cat" class="w-full border rounded px-2 py-1">'+catOpts+'</select>'+
+        '<textarea id="np_desc" class="w-full border rounded px-2 py-1" placeholder="Description"></textarea>'+
+        '<button id="np_go" class="bg-pink-600 text-white px-3 py-2 rounded">Create product</button>';
+      document.getElementById('np_go').onclick = async function(){
+        try {
+          await api('/products', { method:'POST', body: JSON.stringify({
+            nameEn: document.getElementById('np_name').value,
+            nameSw: document.getElementById('np_name').value,
+            slug: document.getElementById('np_slug').value,
+            descriptionEn: document.getElementById('np_desc').value || '-',
+            descriptionSw: document.getElementById('np_desc').value || '-',
+            price: parseInt(document.getElementById('np_price').value,10),
+            stock: parseInt(document.getElementById('np_stock').value,10),
+            categoryId: document.getElementById('np_cat').value,
+            images: []
+          })});
+          box.classList.add('hidden');
+          loadProducts();
+        } catch(e){ alert(e.message); }
+      };
+    };
+
+    async function loadServices() {
+      var box = document.getElementById('serviceTable');
+      box.innerHTML = 'Loading…';
+      try {
+        var j = await api('/admin/services');
+        var rows = (j.data||[]).map(function(s){
+          return '<tr class="border-t"><td class="p-2">'+s.nameEn+'</td><td class="p-2 text-xs">'+s.slug+'</td>'+
+            '<td class="p-2"><input data-id="'+s.id+'" class="sdur w-16 border rounded px-1" type="number" value="'+s.durationMinutes+'"></td>'+
+            '<td class="p-2"><input data-id="'+s.id+'" class="spr w-24 border rounded px-1" type="number" value="'+s.price+'"></td>'+
+            '<td class="p-2 space-x-1"><button data-id="'+s.id+'" class="saveS text-pink-600 text-xs">Update</button> '+
+            '<button data-id="'+s.id+'" class="delS text-red-600 text-xs">Delete</button></td></tr>';
+        }).join('');
+        box.innerHTML = '<table class="w-full text-left"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Name</th><th class="p-2">Slug</th><th class="p-2">Time</th><th class="p-2">Price</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+        box.querySelectorAll('.saveS').forEach(function(b){
+          b.onclick = async function(){
+            var dur = box.querySelector('input.sdur[data-id="'+b.dataset.id+'"]');
+            var pr = box.querySelector('input.spr[data-id="'+b.dataset.id+'"]');
+            await api('/services/'+b.dataset.id,{method:'PATCH',body:JSON.stringify({
+              durationMinutes: parseInt(dur.value,10),
+              price: parseInt(pr.value,10)
+            })});
+            loadServices();
+          };
+        });
+        box.querySelectorAll('.delS').forEach(function(b){
+          b.onclick = async function(){ if(confirm('Delete service?')) { await api('/services/'+b.dataset.id,{method:'DELETE'}); loadServices(); } };
+        });
+      } catch(e){ box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+    }
+
+    document.getElementById('newService').onclick = async function() {
+      var cats = [];
+      try { cats = (await api('/admin/service-categories')).data || []; } catch(e) {}
+      var box = document.getElementById('serviceFormBox');
+      box.classList.remove('hidden');
+      var catOpts = cats.map(function(c){ return '<option value="'+c.id+'">'+c.nameEn+'</option>'; }).join('');
+      box.innerHTML =
+        '<input id="ns_name" class="w-full border rounded px-2 py-1" placeholder="Name">'+
+        '<input id="ns_slug" class="w-full border rounded px-2 py-1" placeholder="slug">'+
+        '<input id="ns_price" type="number" class="w-full border rounded px-2 py-1" placeholder="Price">'+
+        '<input id="ns_mins" type="number" class="w-full border rounded px-2 py-1" value="60">'+
+        '<select id="ns_cat" class="w-full border rounded px-2 py-1">'+catOpts+'</select>'+
+        '<button id="ns_go" class="bg-pink-600 text-white px-3 py-2 rounded">Create service</button>';
+      document.getElementById('ns_go').onclick = async function(){
+        try {
+          await api('/services', { method:'POST', body: JSON.stringify({
+            nameEn: document.getElementById('ns_name').value,
+            nameSw: document.getElementById('ns_name').value,
+            slug: document.getElementById('ns_slug').value,
+            descriptionEn: '-', descriptionSw: '-',
+            durationMinutes: parseInt(document.getElementById('ns_mins').value,10),
+            price: parseInt(document.getElementById('ns_price').value,10),
+            categoryId: document.getElementById('ns_cat').value
+          })});
+          box.classList.add('hidden');
+          loadServices();
+        } catch(e){ alert(e.message); }
+      };
+    };
+
+    async function loadBookings() {
+      var box = document.getElementById('bookingTable');
+      try {
+        var j = await api('/bookings');
+        var rows = (j.data||[]).map(function(b){
+          return '<tr class="border-t"><td class="p-2 text-xs">'+b.bookingNumber+'</td><td class="p-2">'+(b.service&&b.service.nameEn||'')+'</td><td class="p-2">'+b.customerName+'<br><span class="text-xs">'+b.customerPhone+'</span></td><td class="p-2 text-xs">'+new Date(b.scheduledAt).toLocaleString()+'</td>'+
+            '<td class="p-2"><select data-id="'+b.id+'" class="bst border rounded text-xs">'+
+            ['PENDING','CONFIRMED','COMPLETED','CANCELLED'].map(function(s){ return '<option '+(b.status===s?'selected':'')+'>'+s+'</option>'; }).join('')+
+            '</select></td></tr>';
+        }).join('');
+        box.innerHTML = '<table class="w-full"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">#</th><th class="p-2">Service</th><th class="p-2">Client</th><th class="p-2">When</th><th class="p-2">Status</th></tr></thead><tbody>'+(rows||'<tr><td class="p-4" colspan="5">None</td></tr>')+'</tbody></table>';
+        box.querySelectorAll('.bst').forEach(function(s){
+          s.onchange = async function(){ await api('/bookings/'+s.dataset.id+'/status',{method:'PATCH',body:JSON.stringify({status:s.value})}); };
+        });
+      } catch(e){ box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+    }
+
+    async function loadOrders() {
+      var box = document.getElementById('orderTable');
+      try {
+        var j = await api('/admin/orders');
+        var rows = (j.data||[]).map(function(o){
+          return '<tr class="border-t"><td class="p-2 text-xs">'+o.orderNumber+'</td><td class="p-2">'+o.customerName+'</td><td class="p-2">'+money(o.total)+'</td><td class="p-2 text-xs">'+o.status+' / '+o.paymentStatus+'</td></tr>';
+        }).join('');
+        box.innerHTML = '<table class="w-full"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Order</th><th class="p-2">Customer</th><th class="p-2">Total</th><th class="p-2">Status</th></tr></thead><tbody>'+(rows||'<tr><td class="p-4">None</td></tr>')+'</tbody></table>';
+      } catch(e){ box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+    }
+
+    async function loadComms() {
+      var box = document.getElementById('commTable');
+      try {
+        var j = await api('/admin/commissions');
+        var rows = (j.data||[]).map(function(c){
+          return '<tr class="border-t"><td class="p-2 text-xs">'+(c.user&&c.user.name||'')+'</td><td class="p-2 text-xs">'+(c.source||'PRODUCT')+'</td><td class="p-2">'+money(c.amount)+'</td><td class="p-2 text-xs">'+(c.rate*100)+'%</td><td class="p-2">'+
+            '<select data-id="'+c.id+'" class="cst border rounded text-xs">'+
+            ['PENDING','APPROVED','PAID'].map(function(s){ return '<option '+(c.status===s?'selected':'')+'>'+s+'</option>'; }).join('')+
+            '</select></td></tr>';
+        }).join('');
+        box.innerHTML = '<table class="w-full"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Referrer</th><th class="p-2">Source</th><th class="p-2">Amount</th><th class="p-2">Rate</th><th class="p-2">Status</th></tr></thead><tbody>'+(rows||'<tr><td class="p-4">No commissions yet</td></tr>')+'</tbody></table>';
+        box.querySelectorAll('.cst').forEach(function(s){
+          s.onchange = async function(){ await api('/admin/commissions/'+s.dataset.id,{method:'PATCH',body:JSON.stringify({status:s.value})}); };
+        });
+      } catch(e){ box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+    }
+
+    async function loadSettings() {
+      try {
+        var j = await api('/admin/settings');
+        var d = j.data || {};
+        document.getElementById('rateProd').value = d.commission_rate_products || '0.05';
+        document.getElementById('rateSvc').value = d.commission_rate_services || '0.05';
+      } catch(e){ alert(e.message); }
+    }
+    document.getElementById('saveSettings').onclick = async function() {
+      await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          commission_rate_products: document.getElementById('rateProd').value,
+          commission_rate_services: document.getElementById('rateSvc').value
+        })
+      });
+      var m = document.getElementById('setMsg');
+      m.classList.remove('hidden');
+      setTimeout(function(){ m.classList.add('hidden'); }, 2000);
+    };
+
+    // Auto open if already admin
+    try {
+      var u = JSON.parse(localStorage.getItem('emish_user') || 'null');
+      var ok=['ADMIN','SUPER_ADMIN','BRANCH_MANAGER','CASHIER','STAFF'];
+      if (tok() && u && ok.indexOf(u.role)>=0) openApp(u);
+    } catch(e){}
   </script>
 </body>
 </html>

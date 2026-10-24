@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shop | Niffer Cosmetics</title>
+  <title>Shop | Emish Beauty Spa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -34,10 +34,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <a href="index.html" class="flex items-center gap-2">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-display font-bold text-lg">N</div>
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-display font-bold text-lg">E</div>
           <div>
-            <span class="font-display text-xl font-semibold text-primary-800">Niffer</span>
-            <span class="text-xs block text-primary-500 -mt-1 tracking-wider">COSMETICS</span>
+            <span class="font-display text-xl font-semibold text-primary-800">Emish</span>
+            <span class="text-xs block text-primary-500 -mt-1 tracking-wider">BEAUTY SPA</span>
           </div>
         </a>
         <div class="hidden md:flex items-center gap-8">
@@ -45,6 +45,8 @@
           <a href="products.html" class="text-primary-700 font-medium" data-i18n="nav_shop">Shop</a>
           <a href="products.html?cat=skincare" class="text-gray-600 hover:text-primary-600 transition" data-i18n="nav_skincare">Skincare</a>
           <a href="products.html?cat=haircare" class="text-gray-600 hover:text-primary-600 transition" data-i18n="nav_haircare">Hair Care</a>
+          <a href="services.html" class="text-gray-600 hover:text-primary-600">Services</a>
+          <a href="booking.html" class="text-gray-600 hover:text-primary-600">Book</a>
           <a href="referral.html" class="text-gray-600 hover:text-primary-600 transition" data-i18n="nav_referral">Refer & Earn</a>
         </div>
         <div class="flex items-center gap-3">
@@ -111,12 +113,14 @@
 
   <footer class="bg-primary-900 text-primary-100 pt-12 pb-8 mt-16">
     <div class="max-w-7xl mx-auto px-4 text-center text-sm text-primary-300">
-      <p>© 2026 Niffer Cosmetics. All rights reserved.</p>
+      <p>© 2026 Emish Beauty Spa. All rights reserved.</p>
       <p class="mt-2" data-i18n="footer_payments">We accept: M-Pesa • Tigo Pesa • Airtel Money • Cards (via Pesapal)</p>
     </div>
   </footer>
 
   <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/products.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/app.js"></script>
@@ -153,7 +157,7 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const params = new URLSearchParams(window.location.search);
       if (params.get('cat')) currentCategory = params.get('cat');
 
@@ -196,9 +200,11 @@
         if (key) btn.textContent = t(key);
       });
 
+      if (typeof loadProductsFromApi === "function") await loadProductsFromApi();
       renderProducts();
       updateCartCount();
     });
   </script>
+  <script src="js/footer.js"></script>
 </body>
 </html>

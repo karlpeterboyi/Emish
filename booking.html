@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Service | Emish Beauty Spa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { primary: {50:'#fdf2f8',100:'#fce7f3',500:'#ec4899',600:'#db2777',700:'#be185d',800:'#9d174d',900:'#831843'}, cream:'#fef7f0' }
+    }}}
+  </script>
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-cream text-gray-800">
+<main class="max-w-lg mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-primary-900 mb-1">Book an appointment</h1>
+    <p class="text-sm text-gray-500 mb-6">Pick a service, available time, then pay with Pesapal to confirm.</p>
+
+    <form id="bookForm" class="bg-white rounded-2xl border border-primary-50 shadow-sm p-5 space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Service</label>
+        <select id="serviceSelect" required class="w-full border border-primary-200 rounded-xl px-3 py-2.5"></select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Date</label>
+        <input id="date" type="date" required class="w-full border border-primary-200 rounded-xl px-3 py-2.5">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Available time slots</label>
+        <div id="slots" class="grid grid-cols-3 gap-2 min-h-[3rem]">
+          <p class="col-span-3 text-sm text-gray-400">Select a date to load slots</p>
+        </div>
+        <input type="hidden" id="slotIso" required>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Your name</label>
+        <input id="name" required class="w-full border border-primary-200 rounded-xl px-3 py-2.5" placeholder="Full name">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Phone (WhatsApp)</label>
+        <input id="phone" required class="w-full border border-primary-200 rounded-xl px-3 py-2.5" placeholder="0712 345 678">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Email (optional)</label>
+        <input id="email" type="email" class="w-full border border-primary-200 rounded-xl px-3 py-2.5">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Referral code (optional)</label>
+        <input id="ref" class="w-full border border-primary-200 rounded-xl px-3 py-2.5 uppercase" placeholder="Your friend's code">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Notes</label>
+        <textarea id="notes" rows="2" class="w-full border border-primary-200 rounded-xl px-3 py-2.5" placeholder="Preferences..."></textarea>
+      </div>
+
+      <div class="bg-primary-50 rounded-xl p-3 text-sm flex justify-between">
+        <span>To pay</span>
+        <span id="priceLabel" class="font-bold text-primary-700">—</span>
+      </div>
+
+      <p id="formError" class="text-red-600 text-sm hidden"></p>
+      <button type="submit" id="submitBtn" class="w-full py-3.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-full">
+        Book & pay with Pesapal
+      </button>
+      <p class="text-xs text-center text-gray-400">After payment you get WhatsApp confirmation with time & amount.</p>
+    </form>
+  </main>
+
+  <footer class="text-center text-xs text-gray-500 py-8">
+    Dar · Arusha · Dodoma · <a class="text-primary-600" href="https://wa.me/255672283434">WhatsApp</a>
+  </footer>
+
+  <script>
+    var API = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+    var preselect = new URLSearchParams(location.search).get('service') || '';
+    var services = [];
+    var selectedSlot = null;
+
+    function money(n) {
+      return new Intl.NumberFormat('en-TZ').format(n) + ' TZS';
+    }
+
+    // min date = today
+    (function () {
+      var d = new Date();
+      var iso = d.toISOString().slice(0, 10);
+      document.getElementById('date').min = iso;
+      document.getElementById('date').value = iso;
+    })();
+
+    async function loadServices() {
+      var sel = document.getElementById('serviceSelect');
+      try {
+        var r = await fetch(API + '/services');
+        var j = await r.json();
+        services = j.data || [];
+        sel.innerHTML = services.map(function (s) {
+          return '<option value="' + s.slug + '"' + (s.slug === preselect ? ' selected' : '') + '>' +
+            s.nameEn + ' — ' + money(s.price) + ' (' + s.durationMinutes + ' min)</option>';
+        }).join('') || '<option value="">No services</option>';
+        updatePrice();
+        loadSlots();
+      } catch (e) {
+        sel.innerHTML = '<option value="">Backend offline — start API on :4000</option>';
+      }
+    }
+
+    function updatePrice() {
+      var slug = document.getElementById('serviceSelect').value;
+      var s = services.find(function (x) { return x.slug === slug; });
+      document.getElementById('priceLabel').textContent = s ? money(s.price) : '—';
+    }
+
+    async function loadSlots() {
+      var box = document.getElementById('slots');
+      var date = document.getElementById('date').value;
+      var slug = document.getElementById('serviceSelect').value;
+      selectedSlot = null;
+      document.getElementById('slotIso').value = '';
+      if (!date || !slug) {
+        box.innerHTML = '<p class="col-span-3 text-sm text-gray-400">Select service and date</p>';
+        return;
+      }
+      box.innerHTML = '<p class="col-span-3 text-sm text-gray-400">Loading available times…</p>';
+      try {
+        var r = await fetch(API + '/bookings/slots?date=' + encodeURIComponent(date) + '&serviceSlug=' + encodeURIComponent(slug));
+        var j = await r.json();
+        var slots = (j.data && j.data.slots) || [];
+        if (!slots.length) {
+          box.innerHTML = '<p class="col-span-3 text-sm text-amber-700">No open slots this day. Try another date.</p>';
+          return;
+        }
+        box.innerHTML = slots.map(function (s) {
+          return '<button type="button" data-iso="' + s.iso + '" class="slot-btn py-2 rounded-xl border border-primary-200 text-sm hover:border-primary-500 hover:bg-primary-50">' + s.label + '</button>';
+        }).join('');
+        box.querySelectorAll('.slot-btn').forEach(function (btn) {
+          btn.onclick = function () {
+            box.querySelectorAll('.slot-btn').forEach(function (b) {
+              b.classList.remove('bg-primary-600', 'text-white', 'border-primary-600');
+            });
+            btn.classList.add('bg-primary-600', 'text-white', 'border-primary-600');
+            selectedSlot = btn.getAttribute('data-iso');
+            document.getElementById('slotIso').value = selectedSlot;
+          };
+        });
+      } catch (e) {
+        box.innerHTML = '<p class="col-span-3 text-sm text-red-600">Could not load slots</p>';
+      }
+    }
+
+    document.getElementById('serviceSelect').onchange = function () {
+      updatePrice();
+      loadSlots();
+    };
+    document.getElementById('date').onchange = loadSlots;
+
+    document.getElementById('bookForm').onsubmit = async function (e) {
+      e.preventDefault();
+      var err = document.getElementById('formError');
+      err.classList.add('hidden');
+      if (!selectedSlot) {
+        err.textContent = 'Please select an available time slot';
+        err.classList.remove('hidden');
+        return;
+      }
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Creating booking…';
+      try {
+        var payload = {
+          serviceSlug: document.getElementById('serviceSelect').value,
+          customerName: document.getElementById('name').value.trim(),
+          customerPhone: document.getElementById('phone').value.trim(),
+          customerEmail: document.getElementById('email').value.trim() || undefined,
+          scheduledAt: selectedSlot,
+          notes: document.getElementById('notes').value.trim() || undefined,
+          referralCode: document.getElementById('ref').value.trim() || undefined,
+          paymentMethod: 'PESAPAL',
+        };
+        var r = await fetch(API + '/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        var j = await r.json();
+        if (!r.ok) throw new Error(j.error || j.message || 'Booking failed');
+        var booking = j.data;
+        try {
+          sessionStorage.setItem('emish_last_booking', booking.bookingNumber);
+          localStorage.setItem('emish_last_booking', booking.bookingNumber);
+        } catch (e) {}
+
+        btn.textContent = 'Redirecting to Pesapal…';
+        var pay = await fetch(API + '/payments/initiate-booking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingNumber: booking.bookingNumber }),
+        });
+        var pj = await pay.json();
+        var url = pj.data && (pj.data.redirect_url || pj.data.redirectUrl);
+        if (!url) {
+          url = 'pesapal-pay.html?booking=' + encodeURIComponent(booking.bookingNumber) +
+            '&amount=' + (booking.price || '') + '&type=booking';
+        }
+        window.location.href = url;
+      } catch (ex) {
+        err.textContent = ex.message || String(ex);
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Book & pay with Pesapal';
+      }
+    };
+
+    loadServices();
+  </script>
+  <script src="js/footer.js"></script>
+</body>
+</html>

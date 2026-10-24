@@ -60,14 +60,21 @@ router.get('/meta/categories', async (_req, res, next) => {
   }
 });
 
-// GET /api/products/:slug
-router.get('/:slug', async (req, res, next) => {
+// GET /api/products/:slugOrId — by slug or id
+router.get('/:slugOrId', async (req, res, next) => {
   try {
-    const product = await prisma.product.findUnique({
-      where: { slug: req.params.slug },
+    const key = String(req.params.slugOrId || '').trim();
+    if (!key) throw new AppError('Product not found', 404);
+
+    const product = await prisma.product.findFirst({
+      where: {
+        isActive: true,
+        OR: [{ slug: key }, { id: key }],
+      },
       include: { category: true },
     });
-    if (!product || !product.isActive) throw new AppError('Product not found', 404);
+
+    if (!product) throw new AppError('Product not found', 404);
     res.json({ success: true, data: product });
   } catch (err) {
     next(err);
@@ -117,6 +124,47 @@ router.patch('/:id/stock', authenticate, requireAdmin, async (req: AuthRequest, 
       data: { stock },
     });
     res.json({ success: true, data: product });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+// PATCH /api/products/:id — full update
+router.patch('/:id', authenticate, requireAdmin, async (req: AuthRequest, res, next) => {
+  try {
+    if (!['SUPER_ADMIN', 'ADMIN', 'BRANCH_MANAGER', 'STAFF'].includes(req.user!.role)) {
+      throw new AppError('Not allowed', 403);
+    }
+    const data = z.object({
+      nameEn: z.string().optional(),
+      nameSw: z.string().optional(),
+      descriptionEn: z.string().optional(),
+      descriptionSw: z.string().optional(),
+      price: z.number().int().positive().optional(),
+      compareAtPrice: z.number().int().optional().nullable(),
+      stock: z.number().int().optional(),
+      isActive: z.boolean().optional(),
+      isFeatured: z.boolean().optional(),
+      images: z.array(z.string()).optional(),
+      categoryId: z.string().optional(),
+    }).parse(req.body);
+    const product = await prisma.product.update({ where: { id: req.params.id }, data });
+    res.json({ success: true, data: product });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/products/:id — soft delete
+router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res, next) => {
+  try {
+    if (!['SUPER_ADMIN', 'ADMIN', 'BRANCH_MANAGER'].includes(req.user!.role)) {
+      throw new AppError('Only managers can delete products', 403);
+    }
+    await prisma.product.update({ where: { id: req.params.id }, data: { isActive: false } });
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }

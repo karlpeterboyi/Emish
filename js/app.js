@@ -1,4 +1,4 @@
-// Niffer Cosmetics - Main App Logic
+// Emish Beauty Spa - Main App Logic
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile menu

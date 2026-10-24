@@ -80,3 +80,195 @@ input:focus, select:focus, textarea:focus, button:focus {
   letter-spacing: 0.15em;
   font-family: ui-monospace, monospace;
 }
+
+/* Emish footer */
+.emish-footer {
+  margin-top: 4rem;
+  background: linear-gradient(180deg, #9d174d 0%, #831843 40%, #4a0d28 100%);
+  color: #fce7f3;
+  padding: 2.5rem 1rem 1rem;
+}
+.emish-footer-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 768px) {
+  .emish-footer-inner { grid-template-columns: 1.2fr 2fr; }
+}
+.emish-footer-brand { display: flex; align-items: center; gap: 0.75rem; }
+.emish-footer-logo {
+  height: 3rem;
+  width: auto;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  object-fit: contain;
+}
+.emish-footer-name { font-weight: 700; font-size: 1.15rem; color: #fff; margin: 0; }
+.emish-footer-tag { font-size: 0.8rem; opacity: 0.85; margin: 0.15rem 0 0; }
+.emish-footer-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+.emish-footer-h { color: #fff; font-weight: 600; margin: 0 0 0.5rem; }
+.emish-footer-cols a, .emish-footer-cols span {
+  display: block;
+  color: #fbcfe8;
+  text-decoration: none;
+  margin-bottom: 0.35rem;
+}
+.emish-footer-cols a:hover { color: #fff; text-decoration: underline; }
+.emish-footer-bottom {
+  max-width: 72rem;
+  margin: 2rem auto 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+/* ===== Emish mobile-first header ===== */
+.emish-announce {
+  background: #9d174d;
+  color: #fff;
+  text-align: center;
+  font-size: 0.7rem;
+  padding: 0.4rem 0.75rem;
+  line-height: 1.35;
+}
+@media (min-width: 640px) { .emish-announce { font-size: 0.8rem; } }
+.emish-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #fce7f3;
+  box-shadow: 0 1px 8px rgba(157,23,77,0.06);
+}
+.emish-header-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 0.75rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.emish-brand { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; min-width: 0; }
+.emish-brand-logo { height: 2rem; width: auto; object-fit: contain; border-radius: 0.25rem; background: #fff; }
+.emish-brand-fallback {
+  width: 2rem; height: 2rem; border-radius: 999px;
+  background: linear-gradient(135deg,#ec4899,#9d174d);
+  color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.emish-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.emish-brand-text strong { color: #9d174d; font-size: 1rem; }
+.emish-brand-text small { color: #db2777; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.emish-nav-desktop { display: none; gap: 0.25rem; }
+@media (min-width: 900px) {
+  .emish-nav-desktop { display: flex; align-items: center; flex: 1; justify-content: center; }
+}
+.emish-nav-link {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  text-decoration: none;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.emish-nav-link:hover, .emish-nav-link.active { color: #be185d; background: #fdf2f8; }
+.emish-header-actions { display: flex; align-items: center; gap: 0.35rem; }
+.emish-lang-btn {
+  display: flex; align-items: center; gap: 0.2rem;
+  border: 1px solid #f9a8d4; background: #fff;
+  border-radius: 999px; padding: 0.25rem 0.5rem;
+  font-size: 0.75rem; cursor: pointer; color: #831843;
+}
+.emish-flag { font-size: 1rem; line-height: 1; }
+.emish-lang-code { font-weight: 600; }
+.emish-auth-desktop { display: none; gap: 0.35rem; align-items: center; }
+@media (min-width: 900px) { .emish-auth-desktop { display: flex; } }
+.emish-btn-ghost {
+  font-size: 0.8rem; color: #be185d; text-decoration: none;
+  padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid #f9a8d4;
+}
+.emish-btn-primary {
+  font-size: 0.8rem; color: #fff; background: #db2777; text-decoration: none;
+  padding: 0.35rem 0.85rem; border-radius: 999px; font-weight: 600;
+}
+.emish-cart-btn {
+  position: relative; color: #831843; padding: 0.35rem;
+  display: flex; align-items: center; text-decoration: none;
+}
+.emish-cart-badge {
+  position: absolute; top: -2px; right: -4px;
+  background: #db2777; color: #fff; font-size: 0.65rem;
+  min-width: 1.1rem; height: 1.1rem; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px;
+}
+.emish-cart-badge.hidden { display: none; }
+.emish-menu-btn {
+  display: flex; border: none; background: transparent; color: #831843; padding: 0.25rem; cursor: pointer;
+}
+@media (min-width: 900px) { .emish-menu-btn { display: none; } }
+
+/* Drawer */
+.emish-drawer { position: fixed; inset: 0; z-index: 80; }
+.emish-drawer[hidden] { display: none !important; }
+.emish-drawer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+.emish-drawer-panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(20rem, 88vw);
+  background: #fff; padding: 1rem; overflow-y: auto;
+  box-shadow: -8px 0 30px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; gap: 0.15rem;
+}
+.emish-drawer-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; color: #9d174d; margin-bottom: 0.75rem;
+}
+.emish-drawer-head button { border: none; background: none; font-size: 1.25rem; cursor: pointer; color: #6b7280; }
+.emish-drawer-link {
+  display: block; padding: 0.75rem 0.5rem; color: #374151; text-decoration: none;
+  border-radius: 0.5rem; font-size: 0.95rem;
+}
+.emish-drawer-link:hover { background: #fdf2f8; color: #be185d; }
+.emish-drawer-cta {
+  display: block; text-align: center; margin-top: 0.5rem;
+  background: #db2777; color: #fff; font-weight: 600;
+  padding: 0.85rem; border-radius: 999px; text-decoration: none;
+}
+.emish-drawer-divider { height: 1px; background: #fce7f3; margin: 0.5rem 0; }
+.emish-drawer-social {
+  display: flex; gap: 1rem; justify-content: center; margin-top: auto; padding: 1.5rem 0 0.5rem;
+  color: #be185d;
+}
+.emish-drawer-social a { color: inherit; }
+.emish-footer-social { display: flex; gap: 0.85rem; margin-top: 0.75rem; }
+.emish-footer-social a {
+  display: flex; align-items: center; justify-content: center;
+  width: 2.25rem; height: 2.25rem; border-radius: 999px;
+  background: rgba(255,255,255,0.15); color: #fff !important;
+}
+.emish-footer-social a:hover { background: rgba(255,255,255,0.3); }
+
+/* Fallbacks when Tailwind CDN is slow/offline */
+body.bg-cream, .bg-cream { background-color: #fef7f0; }
+.text-primary-800 { color: #9d174d; }
+.text-primary-900 { color: #831843; }
+.text-primary-600, .text-primary-700 { color: #db2777; }
+.border-primary-50 { border-color: #fdf2f8; }
+.border-primary-100, .border-primary-200 { border-color: #fce7f3; }
+.bg-primary-50 { background-color: #fdf2f8; }
+.bg-primary-600 { background-color: #db2777; }
+.bg-primary-700 { background-color: #be185d; }
+.bg-primary-800 { background-color: #9d174d; }

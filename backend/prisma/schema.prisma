@@ -1,5 +1,6 @@
-// Niffer Cosmetics - Prisma Schema
-// SQLite for easy local development → switch to PostgreSQL for production
+// Emish Beauty Spa - Prisma Schema
+// Termux / local default: SQLite (provider = "sqlite", DATABASE_URL="file:./dev.db")
+// Production: change provider to "postgresql" and set DATABASE_URL to your Postgres URL
 
 generator client {
   provider = "prisma-client-js"
@@ -12,7 +13,10 @@ datasource db {
 
 enum Role {
   CUSTOMER
+  CASHIER
+  BRANCH_MANAGER
   ADMIN
+  SUPER_ADMIN
   STAFF
 }
 
@@ -48,6 +52,7 @@ model User {
   name          String
   passwordHash  String?
   role          Role      @default(CUSTOMER)
+  branch        String?   // Dar | Arusha | Dodoma
   referralCode  String    @unique
   referredById  String?
   referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])
@@ -60,6 +65,7 @@ model User {
   commissions   Commission[]
   addresses     Address[]
   cartItems     CartItem[]
+  bookings      Booking[]
 }
 
 model Address {
@@ -183,10 +189,12 @@ model Commission {
   id          String   @id @default(uuid())
   userId      String   // the referrer
   user        User     @relation(fields: [userId], references: [id])
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  bookingId   String?
+  source      String   @default("PRODUCT") // PRODUCT | SERVICE
   amount      Int      // in TZS
-  rate        Float    // e.g. 0.10 for 10%
+  rate        Float    // e.g. 0.05 for 5%
   status      String   @default("PENDING") // PENDING, APPROVED, PAID
   createdAt   DateTime @default(now())
   paidAt      DateTime?
@@ -196,4 +204,65 @@ model Setting {
   id    String @id @default(uuid())
   key   String @unique
   value String
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model ServiceCategory {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  nameEn      String
+  nameSw      String
+  description String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  services    Service[]
+  createdAt   DateTime  @default(now())
+}
+
+model Service {
+  id              String          @id @default(uuid())
+  slug            String          @unique
+  nameEn          String
+  nameSw          String
+  descriptionEn   String
+  descriptionSw   String
+  durationMinutes Int             @default(60)
+  price           Int
+  compareAtPrice  Int?
+  imageUrl        String?
+  categoryId      String
+  category        ServiceCategory @relation(fields: [categoryId], references: [id])
+  isActive        Boolean         @default(true)
+  isFeatured      Boolean         @default(false)
+  sortOrder       Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  bookings        Booking[]
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  bookingNumber   String        @unique
+  serviceId       String
+  service         Service       @relation(fields: [serviceId], references: [id])
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  scheduledAt     DateTime
+  durationMinutes Int
+  status          BookingStatus @default(PENDING)
+  notes           String?
+  price           Int
+  paymentStatus   PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }

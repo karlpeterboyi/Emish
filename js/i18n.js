@@ -1,4 +1,4 @@
-// Niffer Cosmetics - Bilingual i18n (English / Swahili)
+// Emish Beauty Spa - Bilingual i18n (English / Swahili)
 const translations = {
   en: {
     // Nav
@@ -7,13 +7,20 @@ const translations = {
     nav_skincare: "Skincare",
     nav_haircare: "Hair Care",
     nav_referral: "Refer & Earn",
-    nav_account: "My Account",
+    nav_account: "Account",
+    nav_services: "Services",
+    nav_book: "Book",
+    nav_login: "Log in",
+    nav_signup: "Sign up",
+    nav_menu: "Menu",
+    nav_cart: "Cart",
+    nav_book_now: "Book now",
     announcement: "Free delivery in Dar es Salaam for orders over TZS 50,000 | Referral commissions available!",
 
     // Hero
     hero_badge: "Premium Beauty for Tanzania",
     hero_title: "Glow Naturally",
-    hero_title2: "with Niffer",
+    hero_title2: "with Emish",
     hero_desc: "Discover premium skincare and hair care products carefully selected for African skin and hair. Original products from Korea, India, USA, South Africa & Tanzania.",
     hero_cta: "Shop Now",
     hero_cta2: "Refer & Earn",
@@ -44,7 +51,7 @@ const translations = {
     from: "From",
 
     // Why
-    why_title: "Why Choose Niffer?",
+    why_title: "Why Choose Emish?",
     why1_title: "100% Authentic",
     why1_desc: "We source only original products from trusted suppliers in Korea, India, USA, SA & Tanzania.",
     why2_title: "Easy Mobile Money",
@@ -54,7 +61,7 @@ const translations = {
 
     // Referral CTA
     ref_cta_title: "Earn While You Glow",
-    ref_cta_desc: "Invite friends to shop at Niffer Cosmetics and earn 10% commission on their first order. Unlimited earning potential!",
+    ref_cta_desc: "Invite friends to shop at Emish Beauty Spa and earn 5% commission on their first order. Unlimited earning potential!",
     ref_cta_btn: "Get Your Referral Code",
 
     // Footer
@@ -164,7 +171,7 @@ const translations = {
 
     // Success
     order_success: "Order Placed Successfully!",
-    order_success_desc: "Thank you for shopping with Niffer Cosmetics. You will receive a confirmation SMS shortly.",
+    order_success_desc: "Thank you for shopping with Emish Beauty Spa. You will receive a confirmation SMS shortly.",
     order_number: "Order Number",
     back_home: "Back to Home",
 
@@ -182,13 +189,20 @@ const translations = {
     nav_skincare: "Huduma ya Ngozi",
     nav_haircare: "Huduma ya Nywele",
     nav_referral: "Rejelea & Pata",
-    nav_account: "Akaunti Yangu",
+    nav_account: "Akaunti",
+    nav_services: "Huduma",
+    nav_book: "Weka nafasi",
+    nav_login: "Ingia",
+    nav_signup: "Jisajili",
+    nav_menu: "Menyu",
+    nav_cart: "Kikapu",
+    nav_book_now: "Weka nafasi sasa",
     announcement: "Usafirishaji wa bure Dar es Salaam kwa oda zaidi ya TZS 50,000 | Tume za rejelea zinapatikana!",
 
     // Hero
     hero_badge: "Uzuri wa Juu kwa Tanzania",
     hero_title: "Angaza Kiasili",
-    hero_title2: "na Niffer",
+    hero_title2: "na Emish",
     hero_desc: "Gundua bidhaa bora za ngozi na nywele zilizochaguliwa kwa uangalifu kwa ngozi na nywele za Kiafrika. Bidhaa asili kutoka Korea, India, USA, Afrika Kusini & Tanzania.",
     hero_cta: "Nunua Sasa",
     hero_cta2: "Rejelea & Pata",
@@ -219,7 +233,7 @@ const translations = {
     from: "Kutoka",
 
     // Why
-    why_title: "Kwa Nini Uchague Niffer?",
+    why_title: "Kwa Nini Uchague Emish?",
     why1_title: "100% Halisi",
     why1_desc: "Tunachukua bidhaa asili tu kutoka wasambazaji waaminifu Korea, India, USA, Afrika Kusini & Tanzania.",
     why2_title: "Malipo Rahisi ya Simu",
@@ -229,7 +243,7 @@ const translations = {
 
     // Referral CTA
     ref_cta_title: "Pata Wakati Unang'aa",
-    ref_cta_desc: "Alika marafiki kununua Niffer Cosmetics na pata tume ya 10% kwa oda yao ya kwanza. Uwezo usio na kikomo!",
+    ref_cta_desc: "Alika marafiki kununua Emish Beauty Spa na pata tume ya 10% kwa oda yao ya kwanza. Uwezo usio na kikomo!",
     ref_cta_btn: "Pata Nambari yako ya Rejelea",
 
     // Footer
@@ -339,7 +353,7 @@ const translations = {
 
     // Success
     order_success: "Oda Imewekwa kwa Mafanikio!",
-    order_success_desc: "Asante kwa kununua na Niffer Cosmetics. Utapokea SMS ya uthibitisho hivi karibuni.",
+    order_success_desc: "Asante kwa kununua na Emish Beauty Spa. Utapokea SMS ya uthibitisho hivi karibuni.",
     order_number: "Nambari ya Oda",
     back_home: "Rudi Nyumbani",
 
@@ -391,3 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setLanguage(currentLang);
 });
+
+window.setLanguage = typeof setLanguage !== "undefined" ? setLanguage : function(l){ localStorage.setItem("emish_lang", l); location.reload(); };
+
+if (typeof t === "function") window.t = t;
+window.translations = translations;

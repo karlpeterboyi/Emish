@@ -1,163 +1,151 @@
-// Niffer Cosmetics - Cart & Order Management (localStorage based for prototype)
-
-const CART_KEY = 'niffer_cart';
-const USER_KEY = 'niffer_user';
-const REFERRALS_KEY = 'niffer_referrals';
-const ORDERS_KEY = 'niffer_orders';
+// Emish Beauty Spa — Cart (localStorage)
+const CART_KEY = 'emish_cart';
+const CART_KEY_OLD = 'niffer_cart';
 
 function getCart() {
   try {
-    return JSON.parse(localStorage.getItem(CART_KEY)) || [];
-  } catch {
+    var raw = localStorage.getItem(CART_KEY) || localStorage.getItem(CART_KEY_OLD);
+    var cart = raw ? JSON.parse(raw) : [];
+    return Array.isArray(cart) ? cart : [];
+  } catch (e) {
     return [];
   }
 }
 
 function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  try { localStorage.removeItem(CART_KEY_OLD); } catch (e) {}
   updateCartCount();
+  // Notify other UI on same page
+  try {
+    window.dispatchEvent(new CustomEvent('emish-cart-updated', { detail: { count: getCartCount() } }));
+  } catch (e) {}
 }
 
-function addToCart(productId, qty = 1) {
-  const product = getProductById(productId);
-  if (!product) return;
-  if (product.stock < 1) {
-    alert(t('out_of_stock'));
-    return;
+function sameId(a, b) {
+  return String(a) === String(b);
+}
+
+function addToCart(productId, qty) {
+  qty = parseInt(qty, 10) || 1;
+  if (qty < 1) qty = 1;
+
+  var product = null;
+  if (typeof getProductById === 'function') product = getProductById(productId);
+  if (!product && typeof products !== 'undefined') {
+    product = products.find(function (p) { return sameId(p.id, productId) || p.slug === productId; });
+  }
+  if (!product && window.EMISH_CATALOG) {
+    product = window.EMISH_CATALOG.find(function (p) { return sameId(p.id, productId) || p.slug === productId; });
+  }
+  if (!product) {
+    alert('Product not found — open it from Shop first, then add again.');
+    return false;
+  }
+  var stock = product.stock != null ? product.stock : 99;
+  if (stock < 1) {
+    alert((typeof t === 'function' ? t('out_of_stock') : 'Out of stock'));
+    return false;
   }
 
-  const cart = getCart();
-  const existing = cart.find(item => item.id === productId);
+  var cart = getCart();
+  var existing = cart.find(function (item) { return sameId(item.id, product.id); });
   if (existing) {
-    existing.qty = Math.min(existing.qty + qty, product.stock);
+    existing.qty = Math.min((existing.qty || 0) + qty, stock);
   } else {
-    cart.push({ id: productId, qty: Math.min(qty, product.stock) });
+    cart.push({
+      id: product.id,
+      slug: product.slug || '',
+      name: (product.name && product.name.en) || product.nameEn || 'Product',
+      price: product.price,
+      image: product.image || '',
+      qty: Math.min(qty, stock)
+    });
   }
   saveCart(cart);
-  showToast(t('add_to_cart') + ' ✓');
+  showToast((typeof t === 'function' ? t('add_to_cart') : 'Added') + ' ✓');
+  return true;
 }
 
 function removeFromCart(productId) {
-  let cart = getCart().filter(item => item.id !== productId);
-  saveCart(cart);
+  saveCart(getCart().filter(function (item) { return !sameId(item.id, productId); }));
 }
 
 function updateCartQty(productId, qty) {
-  const cart = getCart();
-  const item = cart.find(i => i.id === productId);
-  if (item) {
-    const product = getProductById(productId);
-    item.qty = Math.max(1, Math.min(qty, product ? product.stock : 99));
-    if (item.qty < 1) removeFromCart(productId);
-    else saveCart(cart);
+  qty = parseInt(qty, 10) || 1;
+  var cart = getCart();
+  var item = cart.find(function (i) { return sameId(i.id, productId); });
+  if (!item) return;
+  if (qty < 1) {
+    removeFromCart(productId);
+    return;
   }
+  var product = typeof getProductById === 'function' ? getProductById(productId) : null;
+  var max = product && product.stock != null ? product.stock : 99;
+  item.qty = Math.min(qty, max);
+  saveCart(cart);
 }
 
 function getCartTotal() {
-  return getCart().reduce((sum, item) => {
-    const p = getProductById(item.id);
-    return sum + (p ? p.price * item.qty : 0);
+  return getCart().reduce(function (sum, item) {
+    var price = item.price;
+    if (price == null && typeof getProductById === 'function') {
+      var p = getProductById(item.id);
+      price = p ? p.price : 0;
+    }
+    return sum + (Number(price) || 0) * (item.qty || 0);
   }, 0);
 }
 
 function getCartCount() {
-  return getCart().reduce((sum, item) => sum + item.qty, 0);
+  return getCart().reduce(function (sum, item) { return sum + (item.qty || 0); }, 0);
 }
 
 function updateCartCount() {
-  const el = document.getElementById('cartCount');
-  if (!el) return;
-  const count = getCartCount();
-  if (count > 0) {
-    el.textContent = count > 99 ? '99+' : count;
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-  }
+  var count = getCartCount();
+  document.querySelectorAll('#cartCount, .cart-count').forEach(function (el) {
+    if (count > 0) {
+      el.textContent = count > 99 ? '99+' : String(count);
+      el.classList.remove('hidden');
+      el.style.display = '';
+    } else {
+      el.textContent = '0';
+      el.classList.add('hidden');
+    }
+  });
 }
 
 function clearCart() {
   localStorage.removeItem(CART_KEY);
+  localStorage.removeItem(CART_KEY_OLD);
   updateCartCount();
 }
 
-// User / Auth (mock)
-function getUser() {
-  try {
-    return JSON.parse(localStorage.getItem(USER_KEY));
-  } catch {
-    return null;
-  }
-}
-
-function saveUser(user) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-function logout() {
-  localStorage.removeItem(USER_KEY);
-  window.location.href = 'account.html';
-}
-
-function generateReferralCode(name) {
-  const base = (name || 'NIFFER').replace(/\s+/g, '').substring(0, 4).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return base + rand;
-}
-
-// Referrals
-function getReferrals() {
-  try {
-    return JSON.parse(localStorage.getItem(REFERRALS_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function addReferral(data) {
-  const refs = getReferrals();
-  refs.unshift({
-    id: Date.now(),
-    ...data,
-    date: new Date().toISOString(),
-    status: 'pending'
-  });
-  localStorage.setItem(REFERRALS_KEY, JSON.stringify(refs));
-}
-
-// Orders
-function saveOrder(order) {
-  const orders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
-  orders.unshift(order);
-  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-}
-
-function getOrders() {
-  return JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
-}
-
-// Toast notification
-function showToast(message, duration = 2500) {
-  let toast = document.getElementById('niffer-toast');
+function showToast(msg) {
+  var toast = document.getElementById('emish-toast');
   if (!toast) {
     toast = document.createElement('div');
-    toast.id = 'niffer-toast';
-    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary-800 text-white px-6 py-3 rounded-full shadow-lg z-50 text-sm font-medium transition-all opacity-0 translate-y-4';
+    toast.id = 'emish-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#be185d;color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2)';
     document.body.appendChild(toast);
   }
-  toast.textContent = message;
-  toast.classList.remove('opacity-0', 'translate-y-4');
-  toast.classList.add('opacity-100', 'translate-y-0');
-  setTimeout(() => {
-    toast.classList.add('opacity-0', 'translate-y-4');
-    toast.classList.remove('opacity-100', 'translate-y-0');
-  }, duration);
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function () { toast.style.display = 'none'; }, 2200);
 }
 
-// Shipping calculation (simple prototype)
-function calculateShipping(subtotal, city) {
-  if (subtotal >= 50000) return 0; // Free over 50k
-  const darCities = ['dar', 'dar es salaam', 'dsm', 'sinza', 'kinondoni', 'ilala', 'temeke', 'ubungo', 'kigamboni'];
-  if (city && darCities.some(c => city.toLowerCase().includes(c))) return 3000;
-  return 8000; // Upcountry
+function formatPrice(n) {
+  try {
+    return new Intl.NumberFormat('en-TZ').format(n) + ' TZS';
+  } catch (e) {
+    return n + ' TZS';
+  }
+}
+
+// Auto-update badge when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', updateCartCount);
+} else {
+  updateCartCount();
 }

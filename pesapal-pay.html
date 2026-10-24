@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay with Pesapal | Emish Beauty Spa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+    <div class="bg-[#1B4F72] text-white px-5 py-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs opacity-80">Secure checkout</p>
+        <p class="font-semibold text-lg">Pesapal</p>
+      </div>
+      <span class="text-xs bg-white/20 px-2 py-1 rounded">Sandbox</span>
+    </div>
+    <div class="p-5 space-y-4">
+      <div class="bg-slate-50 rounded-xl p-4 text-sm">
+        <p class="text-slate-500">Merchant</p>
+        <p class="font-semibold">Emish Beauty Spa</p>
+        <p class="text-slate-500 mt-2">Order</p>
+        <p id="orderNo" class="font-mono font-semibold text-pink-700">—</p>
+        <p class="text-slate-500 mt-2">Amount</p>
+        <p id="amount" class="text-xl font-bold">—</p>
+      </div>
+
+      <p class="text-sm font-medium text-slate-700">Choose how to pay</p>
+      <div class="space-y-2" id="methods">
+        <label class="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer has-[:checked]:border-[#1B4F72]">
+          <input type="radio" name="m" value="mpesa" checked class="accent-[#1B4F72]">
+          <span>M-Pesa (Vodacom)</span>
+        </label>
+        <label class="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer has-[:checked]:border-[#1B4F72]">
+          <input type="radio" name="m" value="tigo" class="accent-[#1B4F72]">
+          <span>Tigo Pesa / Mixx by Yas</span>
+        </label>
+        <label class="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer has-[:checked]:border-[#1B4F72]">
+          <input type="radio" name="m" value="airtel" class="accent-[#1B4F72]">
+          <span>Airtel Money</span>
+        </label>
+        <label class="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer has-[:checked]:border-[#1B4F72]">
+          <input type="radio" name="m" value="card" class="accent-[#1B4F72]">
+          <span>Visa / Mastercard</span>
+        </label>
+      </div>
+
+      <div id="phoneBox">
+        <label class="text-xs text-slate-500">Mobile number</label>
+        <input id="phone" type="tel" placeholder="07XXXXXXXX" class="w-full mt-1 border rounded-lg px-3 py-2.5">
+      </div>
+
+      <p id="err" class="text-red-600 text-xs hidden"></p>
+      <button id="payBtn" type="button" class="w-full py-3.5 bg-[#1B4F72] hover:bg-[#154360] text-white font-semibold rounded-xl">
+        Pay now
+      </button>
+      <button id="cancelBtn" type="button" class="w-full py-2 text-sm text-slate-500">Cancel and return</button>
+      <p class="text-[11px] text-slate-400 text-center">
+        Sandbox mode — no real money is charged. Add PESAPAL_CONSUMER_KEY &amp; SECRET in backend .env for live Pesapal redirect.
+      </p>
+    </div>
+  </div>
+  <script>
+    var params = new URLSearchParams(location.search);
+    var order = params.get('order') || params.get('booking') || sessionStorage.getItem('emish_last_order') || sessionStorage.getItem('emish_last_booking') || '';
+    var isBooking = params.get('type') === 'booking' || params.has('booking') || (order && order.indexOf('EB-') === 0);
+    var amount = params.get('amount') || '';
+    document.getElementById('orderNo').textContent = order || 'Unknown';
+    document.getElementById('amount').textContent = amount
+      ? (Number(amount).toLocaleString('en-TZ') + ' TZS')
+      : 'See order';
+
+    document.getElementById('cancelBtn').onclick = function () {
+      location.href = 'checkout.html';
+    };
+
+    document.getElementById('payBtn').onclick = async function () {
+      var btn = document.getElementById('payBtn');
+      var err = document.getElementById('err');
+      err.classList.add('hidden');
+      if (!order) {
+        err.textContent = 'Missing order number';
+        err.classList.remove('hidden');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Processing…';
+      var API = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+      try {
+        await fetch(API + '/payments/demo-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(isBooking ? { bookingNumber: order } : { orderNumber: order }),
+        });
+      } catch (e) {}
+      location.href = 'payment-callback.html?' + (isBooking ? 'booking=' : 'order=') + encodeURIComponent(order) + '&status=demo';
+    };
+  </script>
+</body>
+</html>

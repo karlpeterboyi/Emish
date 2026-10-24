@@ -105,13 +105,16 @@ router.post('/', async (req, res, next) => {
       }
 
       if (referrerId) {
-        const commissionAmount = Math.round(subtotal * Number(process.env.COMMISSION_RATE || 0.10));
+        const rateRow = await prisma.setting.findUnique({ where: { key: 'commission_rate_products' } });
+        const rate = Number(rateRow?.value || process.env.COMMISSION_RATE || 0.05);
+        const commissionAmount = Math.round(subtotal * rate);
         await tx.commission.create({
           data: {
             userId: referrerId,
             orderId: newOrder.id,
             amount: commissionAmount,
-            rate: Number(process.env.COMMISSION_RATE || 0.10),
+            rate,
+            source: 'PRODUCT',
             status: 'PENDING',
           },
         });

@@ -1,5 +1,5 @@
 /**
- * Niffer Cosmetics - API Client
+ * Emish Beauty Spa - API Client
  * Talks to the backend at http://localhost:4000 (or configured API_URL)
  * Falls back gracefully when backend is offline.
  */
@@ -50,8 +50,8 @@ async function request(path, options = {}) {
   }
 }
 
-// Auth
-export const api = {
+// Auth — plain script (not ES module) so window.NifferAPI is always available
+const api = {
   async register({ name, phone, password, email, referralCode }) {
     const res = await request('/auth/register', {
       method: 'POST',
@@ -109,6 +109,13 @@ export const api = {
   },
 
   // Payments
+  async initiateBookingPayment(bookingNumber) {
+    return request('/payments/initiate-booking', {
+      method: 'POST',
+      body: JSON.stringify({ bookingNumber }),
+    });
+  },
+
   async initiatePayment(orderNumber) {
     return request('/payments/initiate', {
       method: 'POST',
@@ -153,6 +160,20 @@ export const api = {
     });
   },
 
+
+  async getServices(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return request(`/services${q ? '?' + q : ''}`);
+  },
+  async getService(slug) {
+    return request(`/services/${slug}`);
+  },
+  async createBooking(payload) {
+    return request('/bookings', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  async lookupBooking(number, phone) {
+    return request(`/bookings/lookup?number=${encodeURIComponent(number)}&phone=${encodeURIComponent(phone)}`);
+  },
   // Health
   async health() {
     return request('/health'.replace('/api/health', '/health').replace('/api', '') || '/health').catch(() =>
@@ -162,7 +183,9 @@ export const api = {
 };
 
 // Expose for non-module scripts
-window.NifferAPI = api;
+window.EmishAPI = api;
+window.EmishAPI = api;
+window.NifferAPI = api; // alias
 window.NifferAuth = { getToken, setAuth, clearAuth, getUser: () => {
   try { return JSON.parse(localStorage.getItem('niffer_user')); } catch { return null; }
 }};

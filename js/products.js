@@ -1,4 +1,4 @@
-// Niffer Cosmetics - Product Catalog (sample data for Tanzania market)
+// Emish Beauty Spa - Product Catalog (sample data for Tanzania market)
 const products = [
   {
     id: 1,
@@ -263,6 +263,67 @@ const products = [
       sw: "Paka kwenye nywele maji, paka kwenye ngozi ya kichwa, osha vizuri. Fuata na conditioner au maski."
     },
     ingredients: "Coconut Milk, Keratin, Aloe Vera, Glycerin, Natural Surfactants"
+  },
+  {
+    id: 101,
+    slug: 'wig-curly-lace-black',
+    name: { en: 'Curly Lace Wig — Black', sw: 'Wigi ya Curly — Nyeusi' },
+    category: 'haircare',
+    price: 180000,
+    originalPrice: 220000,
+    image: 'images/products/wig-curly-1.jpg',
+    badge: 'Wig',
+    stock: 5,
+    rating: 4.9,
+    reviews: 24,
+    description: { en: 'Premium curly lace front wig. Soft, full volume. Available at Emish Beauty Spa.', sw: 'Wigi ya curly lace front. Laini na volume.' },
+    howToUse: { en: 'Adjust lace, style gently. Store on stand.', sw: 'Rekebisha lace, hifadhi kwenye stand.' },
+    ingredients: 'Human/synthetic blend — see in-store'
+  },
+  {
+    id: 102,
+    slug: 'wig-curly-full',
+    name: { en: 'Full Curly Wig — Deep Wave', sw: 'Wigi Curly Kamili' },
+    category: 'haircare',
+    price: 200000,
+    image: 'images/products/wig-curly-2.jpg',
+    badge: 'Wig',
+    stock: 4,
+    rating: 4.8,
+    reviews: 18,
+    description: { en: 'Deep curly full wig for a natural look. Emish Hair collection.', sw: 'Wigi curly kamili mwonekano wa asili.' },
+    howToUse: { en: 'Comb with wide tooth comb from ends.', sw: 'Chana kwa kitana cha meno mapana.' },
+    ingredients: 'See salon'
+  },
+  {
+    id: 103,
+    slug: 'wig-bob-straight',
+    name: { en: 'Straight Bob Lace Wig', sw: 'Wigi Bob Straight' },
+    category: 'haircare',
+    price: 150000,
+    image: 'images/products/wig-bob.jpg',
+    badge: 'Wig',
+    stock: 6,
+    rating: 4.7,
+    reviews: 31,
+    description: { en: 'Shoulder-length straight bob with lace front. Salon quality.', sw: 'Bob straight na lace front.' },
+    howToUse: { en: 'Heat style on low. Protect lace.', sw: 'Tumia heat kwa level ya chini.' },
+    ingredients: 'See salon'
+  },
+  {
+    id: 104,
+    slug: 'wig-straight-medium',
+    name: { en: 'Medium Straight Wig', sw: 'Wigi Straight ya Kati' },
+    category: 'haircare',
+    price: 160000,
+    image: 'images/products/wig-straight-back.jpg',
+    badge: 'Wig',
+    stock: 5,
+    rating: 4.8,
+    reviews: 15,
+    description: { en: 'Natural black medium-length straight wig.', sw: 'Wigi straight nyeusi urefu wa kati.' },
+    howToUse: { en: 'Brush gently. Store properly.', sw: 'Chana polepole.' },
+    ingredients: 'See salon'
   }
 ];
 
@@ -271,7 +332,18 @@ function formatPrice(price) {
 }
 
 function getProductById(id) {
-  return products.find(p => p.id === parseInt(id));
+  if (id === null || id === undefined || id === '') return undefined;
+  const sid = String(id);
+  return products.find(p =>
+    String(p.id) === sid ||
+    (typeof p.id === 'number' && p.id === parseInt(sid, 10)) ||
+    (p.slug && p.slug === sid)
+  );
+}
+
+function getProductBySlug(slug) {
+  if (!slug) return undefined;
+  return products.find(p => p.slug === slug);
 }
 
 function getProductsByCategory(cat) {
@@ -279,41 +351,71 @@ function getProductsByCategory(cat) {
   return products.filter(p => p.category === cat);
 }
 
-function renderProductCard(product) {
-  const lang = currentLang || 'en';
-  const name = product.name[lang] || product.name.en;
-  const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0;
+function productImageHtml(product) {
+  const img = product.image || product.imageUrl || '';
+  if (typeof img === 'string' && (img.startsWith('http') || img.startsWith('/') || img.startsWith('images/') || img.startsWith('data:'))) {
+    return `<img src="${img}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.parentElement.innerHTML='✨'">`;
+  }
+  return `<span class="text-6xl">${img || '✨'}</span>`;
+}
 
-  return `
-    <div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition border border-primary-50">
-      <a href="product.html?id=${product.id}" class="block">
-        <div class="aspect-square bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center text-6xl relative">
-          ${product.image}
-          ${product.badge ? `<span class="absolute top-3 left-3 px-2 py-1 bg-primary-600 text-white text-xs font-medium rounded-full">${product.badge}</span>` : ''}
-          ${discount > 0 ? `<span class="absolute top-3 right-3 px-2 py-1 bg-gold-500 text-white text-xs font-medium rounded-full">-${discount}%</span>` : ''}
-        </div>
-      </a>
-      <div class="p-4">
-        <p class="text-xs text-primary-500 uppercase tracking-wide mb-1">${product.category}</p>
-        <a href="product.html?id=${product.id}">
-          <h3 class="font-medium text-gray-900 group-hover:text-primary-600 transition line-clamp-2 min-h-[2.5rem]">${name}</h3>
-        </a>
-        <div class="flex items-center gap-1 mt-1 text-sm text-amber-500">
-          ${'★'.repeat(Math.floor(product.rating))}${'☆'.repeat(5 - Math.floor(product.rating))}
-          <span class="text-gray-400 text-xs ml-1">(${product.reviews})</span>
-        </div>
-        <div class="mt-3 flex items-center justify-between">
-          <div>
-            <span class="font-semibold text-primary-700">${formatPrice(product.price)}</span>
-            ${product.originalPrice ? `<span class="text-sm text-gray-400 line-through ml-1">${formatPrice(product.originalPrice)}</span>` : ''}
-          </div>
-          <button onclick="addToCart(${product.id})" class="p-2 rounded-full bg-primary-100 hover:bg-primary-600 hover:text-white text-primary-600 transition" title="${t('add_to_cart')}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+
+function productHref(product) {
+  var s = product.slug || ('product-' + product.id);
+  return 'product.html?slug=' + encodeURIComponent(s);
+}
+
+function openProductPage(slugOrId) {
+  var key = String(slugOrId || '');
+  try {
+    var p = products.find(function (x) {
+      return x.slug === key || String(x.id) === key;
+    });
+    if (p) sessionStorage.setItem('emish_view_product', JSON.stringify(p));
+    sessionStorage.setItem('emish_view_slug', key);
+  } catch (e) {}
+  window.location.href = 'product.html?slug=' + encodeURIComponent(key);
+}
+
+function renderProductCard(product) {
+  var lang = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : 'en';
+  var name = (product.name && (product.name[lang] || product.name.en)) || product.nameEn || product.name || 'Product';
+  var compare = product.originalPrice || product.compareAtPrice;
+  var discount = compare ? Math.round((1 - product.price / compare) * 100) : 0;
+  var cat = (product.category && product.category.slug) || product.category || '';
+  var rating = product.rating || 0;
+  var reviews = product.reviews || product.reviewCount || 0;
+  var key = product.slug || String(product.id);
+  var imgHtml = (typeof productImageHtml === 'function') ? productImageHtml(product) : (product.image || '✨');
+
+  return (
+    '<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition border border-primary-50">' +
+      '<a href="product.html?slug=' + encodeURIComponent(key) + '" onclick="openProductPage(\'' + key.replace(/'/g, "\\'") + '\'); return true;" class="block">' +
+        '<div class="aspect-square bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center relative overflow-hidden">' +
+          imgHtml +
+          (product.badge ? '<span class="absolute top-3 left-3 px-2 py-1 bg-primary-600 text-white text-xs font-medium rounded-full z-10">' + product.badge + '</span>' : '') +
+          (discount > 0 ? '<span class="absolute top-3 right-3 px-2 py-1 bg-gold-500 text-white text-xs font-medium rounded-full z-10">-' + discount + '%</span>' : '') +
+        '</div>' +
+      '</a>' +
+      '<div class="p-4">' +
+        '<p class="text-xs text-primary-500 uppercase tracking-wide mb-1">' + cat + '</p>' +
+        '<a href="product.html?slug=' + encodeURIComponent(key) + '" onclick="openProductPage(\'' + key.replace(/'/g, "\\'") + '\'); return true;">' +
+          '<h3 class="font-medium text-gray-900 group-hover:text-primary-600 transition line-clamp-2 min-h-[2.5rem]">' + name + '</h3>' +
+        '</a>' +
+        '<div class="flex items-center gap-1 mt-1 text-sm text-amber-500">' +
+          '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating)) +
+          '<span class="text-gray-400 text-xs ml-1">(' + reviews + ')</span>' +
+        '</div>' +
+        '<div class="mt-3 flex items-center justify-between">' +
+          '<div>' +
+            '<span class="font-semibold text-primary-700">' + formatPrice(product.price) + '</span>' +
+            (compare ? '<span class="text-sm text-gray-400 line-through ml-1">' + formatPrice(compare) + '</span>' : '') +
+          '</div>' +
+          '<button type="button" onclick="event.preventDefault(); addToCart(' + JSON.stringify(String(product.id)) + ')" class="p-2 rounded-full bg-primary-100 hover:bg-primary-600 hover:text-white text-primary-600 transition">+</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
 }
 
 function renderFeaturedProducts() {
@@ -321,4 +423,84 @@ function renderFeaturedProducts() {
   if (!container) return;
   const featured = products.slice(0, 4);
   container.innerHTML = featured.map(renderProductCard).join('');
+}
+
+/** Map API product → frontend card shape */
+function mapApiProduct(p) {
+  let images = [];
+  try {
+    images = typeof p.images === 'string' ? JSON.parse(p.images) : (p.images || []);
+  } catch { images = []; }
+  const first = images[0] || '✨';
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: { en: p.nameEn, sw: p.nameSw },
+    nameEn: p.nameEn,
+    category: p.category?.slug || p.categoryId,
+    price: p.price,
+    originalPrice: p.compareAtPrice,
+    compareAtPrice: p.compareAtPrice,
+    image: first,
+    badge: p.badge,
+    stock: p.stock,
+    rating: p.rating,
+    reviews: p.reviewCount,
+    reviewCount: p.reviewCount,
+    description: { en: p.descriptionEn, sw: p.descriptionSw },
+    howToUse: { en: p.howToUseEn, sw: p.howToUseSw },
+    ingredients: p.ingredients,
+  };
+}
+
+/** Prefer backend catalog when API is up */
+async function loadProductsFromApi() {
+  try {
+    let list = [];
+    if (window.NifferAPI) {
+      const res = await window.NifferAPI.getProducts({ limit: 100 });
+      list = (res.data || []).map(mapApiProduct);
+    } else {
+      const API = localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+      const r = await fetch(API + '/products?limit=100');
+      const res = await r.json();
+      list = (res.data || []).map(mapApiProduct);
+    }
+    if (list.length) {
+      products.length = 0;
+      products.push(...list);
+      try { sessionStorage.setItem('niffer_products_cache', JSON.stringify(list)); } catch (_) {}
+      return true;
+    }
+  } catch (e) {
+    console.warn('API products unavailable, trying cache', e);
+  }
+  // Restore from session cache (survives navigation to product.html)
+  try {
+    const cached = sessionStorage.getItem('niffer_products_cache');
+    if (cached) {
+      const list = JSON.parse(cached);
+      if (list && list.length) {
+        products.length = 0;
+        products.push(...list);
+        return true;
+      }
+    }
+  } catch (_) {}
+  return false;
+}
+
+function loadProductsFromCache() {
+  try {
+    const cached = sessionStorage.getItem('niffer_products_cache');
+    if (cached) {
+      const list = JSON.parse(cached);
+      if (list && list.length) {
+        products.length = 0;
+        products.push(...list);
+        return true;
+      }
+    }
+  } catch (_) {}
+  return false;
 }

@@ -2,159 +2,159 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product | Niffer Cosmetics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+  <title>Product | Emish Beauty Spa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: { 50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' },
-            gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
-            cream: '#fef7f0'
-          },
-          fontFamily: {
-            display: ['Playfair Display', 'serif'],
-            sans: ['Inter', 'system-ui', 'sans-serif']
-          }
-        }
-      }
-    }
+    tailwind.config = { theme: { extend: {
+      colors: { primary: {50:'#fdf2f8',100:'#fce7f3',500:'#ec4899',600:'#db2777',700:'#be185d',800:'#9d174d',900:'#831843'}, cream:'#fef7f0' },
+      fontFamily: { display:['Playfair Display','serif'], sans:['Inter','system-ui','sans-serif'] }
+    }}}
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-cream font-sans text-gray-800 antialiased">
-  <div class="bg-primary-700 text-white text-center py-2 text-sm">
-    <span data-i18n="announcement">Free delivery in Dar es Salaam for orders over TZS 50,000 | Referral commissions available!</span>
-  </div>
-
-  <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-primary-100 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <a href="index.html" class="flex items-center gap-2">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-display font-bold text-lg">N</div>
-          <div>
-            <span class="font-display text-xl font-semibold text-primary-800">Niffer</span>
-            <span class="text-xs block text-primary-500 -mt-1 tracking-wider">COSMETICS</span>
-          </div>
-        </a>
-        <div class="hidden md:flex items-center gap-8">
-          <a href="index.html" class="text-gray-600 hover:text-primary-600" data-i18n="nav_home">Home</a>
-          <a href="products.html" class="text-gray-600 hover:text-primary-600" data-i18n="nav_shop">Shop</a>
-          <a href="referral.html" class="text-gray-600 hover:text-primary-600" data-i18n="nav_referral">Refer & Earn</a>
-        </div>
-        <div class="flex items-center gap-3">
-          <button id="langToggle" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-primary-200 text-sm font-medium hover:bg-primary-50">
-            <span id="langLabel">EN</span>
-          </button>
-          <a href="account.html" class="p-2 rounded-full hover:bg-primary-50">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-          </a>
-          <a href="cart.html" class="relative p-2 rounded-full hover:bg-primary-50">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            <span id="cartCount" class="absolute -top-1 -right-1 bg-primary-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium hidden">0</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" id="productDetail">
-    <!-- Injected by JS -->
+<body class="bg-cream font-sans text-gray-800">
+<main id="box" class="max-w-3xl mx-auto px-4 py-8">
+    <p class="text-center text-gray-500 py-12">Loading product…</p>
   </main>
 
-  <footer class="bg-primary-900 text-primary-100 pt-12 pb-8 mt-16">
-    <div class="max-w-7xl mx-auto px-4 text-center text-sm text-primary-300">
-      <p>© 2026 Niffer Cosmetics</p>
-    </div>
-  </footer>
-
+  <!-- Built-in catalog: works even if js/products.js fails on phone -->
+  <script>
+    window.EMISH_CATALOG = [
+      {id:1,slug:'glow-serum-vitamin-c',name:{en:"Glow Serum with Vitamin C"},category:'skincare',price:45000,originalPrice:55000,image:'🧴',stock:25,description:{en:'Brightening serum with Vitamin C for African skin tones.'},howToUse:{en:'3-4 drops morning and evening after cleansing.'},ingredients:'Vitamin C, Niacinamide, Hyaluronic Acid'},
+      {id:2,slug:'shea-butter-hair-mask',name:{en:'Shea Butter Hair Mask'},category:'haircare',price:28000,image:'🥥',stock:40,description:{en:'Deep conditioning mask with African shea butter.'},howToUse:{en:'Apply to damp hair 20-30 min then rinse.'},ingredients:'Shea Butter, Coconut Oil'},
+      {id:3,slug:'turmeric-brightening-cream',name:{en:'Turmeric Brightening Cream'},category:'skincare',price:32000,image:'✨',stock:30,description:{en:'Day cream with turmeric for even tone.'},howToUse:{en:'Apply morning after serum. Use SPF.'},ingredients:'Turmeric, Niacinamide'},
+      {id:4,slug:'castor-oil-growth-treatment',name:{en:'Castor Oil Growth Treatment'},category:'haircare',price:22000,image:'💧',stock:60,description:{en:'Castor oil with rosemary for scalp and growth.'},howToUse:{en:'Massage into scalp 2-3x weekly.'},ingredients:'Castor Oil, Rosemary'},
+      {id:5,slug:'african-black-soap-cleanser',name:{en:'African Black Soap Cleanser'},category:'skincare',price:18000,image:'🧼',stock:80,description:{en:'Traditional black soap cleanser.'},howToUse:{en:'Use on wet face, rinse.'},ingredients:'Plantain Ash, Shea Butter'},
+      {id:6,slug:'argan-oil-leave-in',name:{en:'Argan Oil Leave-In Conditioner'},category:'haircare',price:35000,image:'✨',stock:35,description:{en:'Leave-in with argan oil for shine and detangle.'},howToUse:{en:'Apply to damp hair, do not rinse.'},ingredients:'Argan Oil, Aloe'},
+      {id:7,slug:'shea-cocoa-body-butter',name:{en:'Shea & Cocoa Body Butter'},category:'body',price:25000,image:'🧴',stock:50,description:{en:'Rich body butter for dry skin.'},howToUse:{en:'Apply after bath.'},ingredients:'Shea Butter, Cocoa Butter'},
+      {id:8,slug:'glow-complete-bundle',name:{en:'Glow Complete Bundle'},category:'bundles',price:95000,originalPrice:125000,image:'🎁',stock:20,description:{en:'Cleanser + serum + cream set.'},howToUse:{en:'Use as daily routine.'},ingredients:'See individual products'},
+      {id:9,slug:'rosehip-facial-oil',name:{en:'Rosehip Oil Facial Oil'},category:'skincare',price:38000,image:'🌹',stock:28,description:{en:'Pure rosehip oil for repair and glow.'},howToUse:{en:'2-3 drops at night.'},ingredients:'Rosehip Seed Oil'},
+      {id:10,slug:'coconut-milk-shampoo',name:{en:'Coconut Milk Shampoo'},category:'haircare',price:20000,image:'🥥',stock:45,description:{en:'Sulfate-free coconut milk shampoo.'},howToUse:{en:'Apply to wet hair, rinse.'},ingredients:'Coconut Milk, Keratin'}
+    ];
+  </script>
   <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
   <script src="js/products.js"></script>
   <script src="js/cart.js"></script>
-  <script src="js/app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
-      const product = getProductById(id);
-      const container = document.getElementById('productDetail');
+    function money(n) {
+      try { return new Intl.NumberFormat('en-TZ').format(n) + ' TZS'; }
+      catch (e) { return n + ' TZS'; }
+    }
+    function changeQty(d) {
+      var i = document.getElementById('qty');
+      if (!i) return;
+      var v = parseInt(i.value, 10) + d;
+      i.value = Math.max(1, Math.min(v, parseInt(i.max, 10) || 99));
+    }
+    function findProduct() {
+      var q = new URLSearchParams(location.search || '');
+      var slug = q.get('slug') || q.get('id') || '';
+      var stored = null;
+      try {
+        var raw = sessionStorage.getItem('emish_view_product');
+        if (raw) stored = JSON.parse(raw);
+      } catch (e) {}
+      if (!slug) {
+        try { slug = sessionStorage.getItem('emish_view_slug') || ''; } catch (e) {}
+      }
 
-      if (!product) {
-        container.innerHTML = `<div class="text-center py-20"><p class="text-gray-500 mb-4">Product not found</p><a href="products.html" class="text-primary-600 font-medium">${t('back_to_shop')}</a></div>`;
+      // 1) sessionStorage from shop click
+      if (stored && (!slug || stored.slug === slug || String(stored.id) === slug)) return stored;
+
+      // 2) products.js array
+      var list = (typeof products !== 'undefined' && products.length) ? products : window.EMISH_CATALOG;
+      if (slug) {
+        var hit = list.find(function (p) { return p.slug === slug || String(p.id) === String(slug); });
+        if (hit) return hit;
+      }
+
+      // 3) embedded catalog
+      if (slug) {
+        hit = window.EMISH_CATALOG.find(function (p) { return p.slug === slug || String(p.id) === String(slug); });
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    function render(p) {
+      var box = document.getElementById('box');
+      if (!p) {
+        // Show tappable list — works on phone with no DevTools
+        var items = (typeof products !== 'undefined' && products.length) ? products : window.EMISH_CATALOG;
+        box.innerHTML =
+          '<p class="text-center font-medium mb-2">Choose a product</p>' +
+          '<p class="text-center text-sm text-gray-500 mb-6">Open from Shop, or tap below:</p>' +
+          '<div class="space-y-2">' +
+          items.map(function (x) {
+            var n = (x.name && x.name.en) || x.nameEn || x.slug;
+            var s = x.slug || x.id;
+            return '<a class="block p-4 bg-white rounded-xl border border-pink-100 font-medium" href="product.html?slug=' + encodeURIComponent(s) + '">' + n + ' — ' + money(x.price) + '</a>';
+          }).join('') +
+          '</div>' +
+          '<p class="text-center mt-8"><a class="text-primary-600" href="products.html">← Back to shop</a></p>';
         return;
       }
 
-      const lang = currentLang;
-      const name = product.name[lang] || product.name.en;
-      const desc = product.description[lang] || product.description.en;
-      const howTo = product.howToUse[lang] || product.howToUse.en;
-      const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0;
+      var name = (p.name && p.name.en) || p.nameEn || 'Product';
+      var desc = (p.description && p.description.en) || p.descriptionEn || '';
+      var how = (p.howToUse && p.howToUse.en) || p.howToUseEn || '';
+      var img = p.image || '✨';
+      var imgH = (String(img).indexOf('http') === 0)
+        ? '<img src="' + img + '" alt="" style="width:100%;height:100%;object-fit:cover">'
+        : '<div style="font-size:4rem;text-align:center;padding:2rem">' + img + '</div>';
+      var id = JSON.stringify(String(p.id));
 
-      document.title = name + ' | Niffer Cosmetics';
+      // ensure cart can find it
+      if (typeof products !== 'undefined') {
+        var exists = products.some(function (x) { return String(x.id) === String(p.id); });
+        if (!exists) products.push(p);
+      }
 
-      container.innerHTML = `
-        <a href="products.html" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 mb-6">${t('back_to_shop')}</a>
-        <div class="grid md:grid-cols-2 gap-10">
-          <div class="aspect-square rounded-3xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center text-9xl relative">
-            ${product.image}
-            ${product.badge ? `<span class="absolute top-6 left-6 px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-full">${product.badge}</span>` : ''}
-          </div>
-          <div>
-            <p class="text-sm text-primary-500 uppercase tracking-wide mb-2">${product.category}</p>
-            <h1 class="font-display text-3xl md:text-4xl font-bold text-primary-900 mb-3">${name}</h1>
-            <div class="flex items-center gap-2 mb-4">
-              <span class="text-amber-500">${'★'.repeat(Math.floor(product.rating))}${'☆'.repeat(5-Math.floor(product.rating))}</span>
-              <span class="text-sm text-gray-500">${product.rating} (${product.reviews} ${t('reviews')})</span>
-            </div>
-            <div class="flex items-baseline gap-3 mb-6">
-              <span class="text-3xl font-bold text-primary-700">${formatPrice(product.price)}</span>
-              ${product.originalPrice ? `<span class="text-lg text-gray-400 line-through">${formatPrice(product.originalPrice)}</span><span class="px-2 py-0.5 bg-gold-500 text-white text-xs rounded-full">-${discount}%</span>` : ''}
-            </div>
-            <p class="text-green-600 text-sm font-medium mb-6 flex items-center gap-1">
-              <span class="w-2 h-2 bg-green-500 rounded-full"></span> ${product.stock > 0 ? t('in_stock') + ` (${product.stock})` : t('out_of_stock')}
-            </p>
-            <div class="flex items-center gap-4 mb-8">
-              <label class="text-sm font-medium">${t('quantity')}</label>
-              <div class="flex items-center border border-primary-200 rounded-full overflow-hidden">
-                <button onclick="changeQty(-1)" class="px-4 py-2 hover:bg-primary-50">−</button>
-                <input type="number" id="qtyInput" value="1" min="1" max="${product.stock}" class="w-14 text-center border-0 focus:ring-0 py-2">
-                <button onclick="changeQty(1)" class="px-4 py-2 hover:bg-primary-50">+</button>
-              </div>
-            </div>
-            <button onclick="addToCart(${product.id}, parseInt(document.getElementById('qtyInput').value))" class="w-full sm:w-auto px-8 py-3.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-full shadow-lg shadow-primary-200 transition flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-              ${t('add_to_cart')}
-            </button>
+      document.title = name + ' | Emish Beauty Spa';
+      box.innerHTML =
+        '<a href="products.html" class="text-sm text-primary-600">← Shop</a>' +
+        '<div class="mt-4 bg-white rounded-3xl overflow-hidden border border-pink-100">' +
+          '<div class="bg-pink-50" style="aspect-ratio:1">' + imgH + '</div>' +
+          '<div class="p-5">' +
+            '<p class="text-xs uppercase text-primary-500">' + (p.category || '') + '</p>' +
+            '<h1 class="text-2xl font-bold text-primary-900 mt-1">' + name + '</h1>' +
+            '<p class="text-xl font-bold text-primary-700 mt-3">' + money(p.price) + '</p>' +
+            '<p class="text-gray-600 mt-4 text-sm leading-relaxed">' + desc + '</p>' +
+            (how ? '<p class="text-sm text-gray-500 mt-3"><b>How to use:</b> ' + how + '</p>' : '') +
+            '<div class="flex items-center gap-3 mt-6">' +
+              '<button type="button" onclick="changeQty(-1)" class="w-10 h-10 rounded-full border">−</button>' +
+              '<input id="qty" type="number" value="1" min="1" max="' + (p.stock || 99) + '" class="w-14 text-center border rounded-lg py-2">' +
+              '<button type="button" onclick="changeQty(1)" class="w-10 h-10 rounded-full border">+</button>' +
+            '</div>' +
+            '<button type="button" id="addBtn" class="mt-6 w-full py-3.5 bg-primary-600 text-white font-semibold rounded-full">Add to cart</button>' +
+          '</div>' +
+        '</div>';
 
-            <div class="mt-10 space-y-6">
-              <div>
-                <h3 class="font-semibold text-lg mb-2">${t('description')}</h3>
-                <p class="text-gray-600 leading-relaxed">${desc}</p>
-              </div>
-              <div>
-                <h3 class="font-semibold text-lg mb-2">${t('how_to_use')}</h3>
-                <p class="text-gray-600 leading-relaxed">${howTo}</p>
-              </div>
-              <div>
-                <h3 class="font-semibold text-lg mb-2">${t('ingredients')}</h3>
-                <p class="text-gray-600 text-sm">${product.ingredients}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      updateCartCount();
-    });
-
-    function changeQty(delta) {
-      const input = document.getElementById('qtyInput');
-      let val = parseInt(input.value) + delta;
-      val = Math.max(1, Math.min(val, parseInt(input.max)));
-      input.value = val;
+      document.getElementById('addBtn').onclick = function () {
+        var q = parseInt(document.getElementById('qty').value, 10) || 1;
+        if (typeof addToCart === 'function') {
+          addToCart(p.id, q);
+        } else {
+          alert('Added (cart script loading). Go to Cart.');
+        }
+      };
+      if (typeof updateCartCount === 'function') updateCartCount();
     }
+
+    // Run immediately + again after products.js may load
+    function run() { render(findProduct()); }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run);
+    } else {
+      run();
+    }
+    // second pass after other scripts
+    setTimeout(run, 100);
+    setTimeout(run, 500);
   </script>
+  <script src="js/footer.js"></script>
 </body>
 </html>
