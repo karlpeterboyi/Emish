@@ -17,6 +17,7 @@ import uploadRoutes from './routes/uploads.js';
 import serviceRoutes from './routes/services.js';
 import bookingRoutes from './routes/bookings.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { bootstrapDatabase } from './bootstrapDb.js';
 
 dotenv.config();
 
@@ -96,6 +97,8 @@ async function main() {
     if (!process.env.PESAPAL_CONSUMER_KEY || process.env.PESAPAL_CONSUMER_KEY.includes('your_')) {
       console.warn('⚠️  Pesapal keys not set — payment runs in DEMO mode');
     }
+
+    await bootstrapDatabase();
 
     app.listen(PORT, () => {
       console.log(`\n🚀 Emish Beauty Spa API  v1.1.0`);
