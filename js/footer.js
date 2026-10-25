@@ -19,7 +19,9 @@
             '<a href="products.html">Shop</a>' +
             '<a href="services.html">Services</a>' +
             '<a href="booking.html">Book</a>' +
-            '<a href="referral.html">Refer & Earn</a></div>' +
+            '<a href="referral.html">Refer & Earn</a>' +
+            '<a href="privacy.html">Privacy</a>' +
+            '<a href="terms.html">Terms</a></div>' +
           '<div><p class="emish-footer-h">Branches</p>' +
             '<span>Dar es Salaam — Sinza</span>' +
             '<span>Arusha — Njiro</span>' +
