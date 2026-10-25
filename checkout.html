@@ -307,7 +307,7 @@ document.getElementById('applyRefBtn').addEventListener('click', () => {
       async function resolveApiProductIds(items) {
         // Map local numeric ids to backend UUIDs via slug
         try {
-          var API = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+          var API = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url') || 'https://emish-api.onrender.com/api';
           var r = await fetch(API + '/products?limit=100');
           if (!r.ok) return items;
           var j = await r.json();

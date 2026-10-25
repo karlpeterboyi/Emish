@@ -461,7 +461,7 @@ async function loadProductsFromApi() {
       const res = await window.NifferAPI.getProducts({ limit: 100 });
       list = (res.data || []).map(mapApiProduct);
     } else {
-      const API = localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+      const API = localStorage.getItem('niffer_api_url') || 'https://emish-api.onrender.com/api';
       const r = await fetch(API + '/products?limit=100');
       const res = await r.json();
       list = (res.data || []).map(mapApiProduct);

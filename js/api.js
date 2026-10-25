@@ -4,7 +4,7 @@
  * Falls back gracefully when backend is offline.
  */
 
-const API_BASE = localStorage.getItem('niffer_api_url') || 'http://localhost:4000/api';
+const API_BASE = localStorage.getItem('niffer_api_url') || 'https://emish-api.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('niffer_token');
