@@ -254,7 +254,7 @@ router.post('/webhook', async (req, res) => {
           },
         });
         const appUrl = (process.env.APP_URL || 'https://emishbeautyspa.co.tz').replace(/\/$/, '');
-        const payUrl = `${appUrl}/pesapal-pay.html?order=${encodeURIComponent(order.orderNumber)}&amount=${order.total}`;
+        const payUrl = `${appUrl}/pay.html?order=${encodeURIComponent(order.orderNumber)}&amount=${order.total}`;
         await reply(
           from,
           `✅ Order *${order.orderNumber}* created\n` +
@@ -402,7 +402,7 @@ router.post('/webhook', async (req, res) => {
           },
         });
         const appUrl = (process.env.APP_URL || 'https://emishbeautyspa.co.tz').replace(/\/$/, '');
-        const payUrl = `${appUrl}/pesapal-pay.html?booking=${encodeURIComponent(booking.bookingNumber)}&amount=${booking.price}&type=booking`;
+        const payUrl = `${appUrl}/pay.html?booking=${encodeURIComponent(booking.bookingNumber)}&amount=${booking.price}&type=booking`;
         await reply(
           from,
           `✅ Booking *${booking.bookingNumber}*\n` +
@@ -431,7 +431,7 @@ router.post('/webhook', async (req, res) => {
         }
         await reply(
           from,
-          `Pay booking ${ref}:\n${appUrl}/pesapal-pay.html?booking=${encodeURIComponent(ref)}&amount=${b.price}&type=booking`
+          `Pay booking ${ref}:\n${appUrl}/pay.html?booking=${encodeURIComponent(ref)}&amount=${b.price}&type=booking`
         );
         return;
       }
@@ -442,7 +442,7 @@ router.post('/webhook', async (req, res) => {
       }
       await reply(
         from,
-        `Pay order ${ref}:\n${appUrl}/pesapal-pay.html?order=${encodeURIComponent(ref)}&amount=${o.total}`
+        `Pay order ${ref}:\n${appUrl}/pay.html?order=${encodeURIComponent(ref)}&amount=${o.total}`
       );
       return;
     }

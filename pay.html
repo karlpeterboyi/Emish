@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay | Emish Beauty Spa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { primary: { 50:'#fdf2f8', 600:'#db2777', 700:'#be185d', 900:'#831843' }, cream:'#fef7f0' }
+    }}}
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-cream text-gray-800 min-h-screen">
+  <div class="max-w-md mx-auto px-4 py-8">
+    <div class="flex items-center gap-3 mb-6">
+      <img src="images/brand/logo.jpg" alt="Emish" class="h-12 object-contain" onerror="this.style.display='none'">
+      <div>
+        <h1 class="text-xl font-bold text-primary-900">Complete payment</h1>
+        <p class="text-xs text-gray-500">Emish Beauty Spa · Secure checkout</p>
+      </div>
+    </div>
+
+    <div id="summary" class="bg-white rounded-2xl border border-primary-100 p-5 mb-4 shadow-sm">
+      <p class="text-sm text-gray-500">Loading…</p>
+    </div>
+
+    <div class="space-y-3 mb-6">
+      <button type="button" data-method="pesapal" class="pay-method w-full text-left bg-white border-2 border-primary-200 hover:border-primary-600 rounded-2xl p-4 transition">
+        <p class="font-semibold text-primary-800">1. Pesapal (recommended)</p>
+        <p class="text-xs text-gray-500 mt-1">Card · M-Pesa · Tigo Pesa · Airtel Money via Pesapal secure page</p>
+      </button>
+      <button type="button" data-method="till" class="pay-method w-full text-left bg-white border-2 border-gray-100 hover:border-primary-400 rounded-2xl p-4 transition">
+        <p class="font-semibold">2. Till number (Lipa)</p>
+        <p class="text-xs text-gray-500 mt-1">Pay via mobile money till, then we confirm</p>
+      </button>
+      <button type="button" data-method="bank" class="pay-method w-full text-left bg-white border-2 border-gray-100 hover:border-primary-400 rounded-2xl p-4 transition">
+        <p class="font-semibold">3. Bank transfer</p>
+        <p class="text-xs text-gray-500 mt-1">Deposit to our bank account and send proof</p>
+      </button>
+    </div>
+
+    <div id="altBox" class="hidden bg-white rounded-2xl border p-5 text-sm space-y-2 mb-4"></div>
+    <p id="msg" class="text-sm text-center text-gray-600"></p>
+    <p class="text-center text-xs text-gray-400 mt-6">
+      <a href="index.html" class="underline">Back to store</a> · WhatsApp 0672 283 434
+    </p>
+  </div>
+
+  <script>
+    var API = (function () {
+      var h = location.hostname || '';
+      var isLocal = h === 'localhost' || h === '127.0.0.1';
+      var s = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url');
+      if (!isLocal && s && s.indexOf('localhost') >= 0) s = null;
+      if (s) return s.replace(/\/$/, '');
+      if (isLocal) return 'http://localhost:4000/api';
+      return 'https://emish-api.onrender.com/api';
+    })();
+
+    var params = new URLSearchParams(location.search);
+    var booking = params.get('booking') || params.get('ref') || '';
+    var order = params.get('order') || '';
+    var amount = params.get('amount') || '';
+    var type = params.get('type') || (booking ? 'booking' : 'order');
+    var ref = booking || order;
+
+    var TILL = {
+      name: 'Emish Beauty Spa',
+      number: '0672 283 434',
+      note: 'Use your booking/order number as the reference'
+    };
+    var BANK = {
+      bank: 'CRDB / NMB (confirm with branch)',
+      accountName: 'Emish Beauty Spa',
+      accountNumber: 'Contact 0672 283 434 for account number',
+      note: 'Send SMS/WhatsApp with transfer proof + reference'
+    };
+
+    function money(n) {
+      return new Intl.NumberFormat('en-TZ').format(Number(n) || 0) + ' TZS';
+    }
+
+    async function loadSummary() {
+      var el = document.getElementById('summary');
+      if (!ref) {
+        el.innerHTML = '<p class="text-red-600">Missing order or booking reference.</p>';
+        return;
+      }
+      try {
+        if (type === 'booking' || String(ref).indexOf('EB-') === 0) {
+          type = 'booking';
+          var r = await fetch(API + '/payments/booking-status/' + encodeURIComponent(ref));
+          var j = await r.json();
+          var d = j.data || {};
+          amount = d.price || amount;
+          el.innerHTML =
+            '<p class="text-xs text-gray-500">Booking</p>' +
+            '<p class="font-bold text-lg">' + (d.bookingNumber || ref) + '</p>' +
+            '<p class="text-sm mt-1">' + (d.service || 'Service') + '</p>' +
+            (d.scheduledAt ? '<p class="text-xs text-gray-500">' + new Date(d.scheduledAt).toLocaleString() + '</p>' : '') +
+            '<p class="text-primary-700 font-bold text-xl mt-3">' + money(amount) + '</p>' +
+            '<p class="text-xs mt-1">Payment: ' + (d.paymentStatus || 'PENDING') + '</p>';
+          if (d.paymentStatus === 'COMPLETED') {
+            document.getElementById('msg').textContent = 'Already paid. Thank you!';
+          }
+        } else {
+          var r2 = await fetch(API + '/payments/status/' + encodeURIComponent(ref));
+          var j2 = await r2.json();
+          var d2 = j2.data || {};
+          amount = d2.total || amount;
+          el.innerHTML =
+            '<p class="text-xs text-gray-500">Order</p>' +
+            '<p class="font-bold text-lg">' + (d2.orderNumber || ref) + '</p>' +
+            '<p class="text-primary-700 font-bold text-xl mt-3">' + money(amount) + '</p>' +
+            '<p class="text-xs mt-1">Payment: ' + (d2.paymentStatus || 'PENDING') + '</p>';
+        }
+      } catch (e) {
+        el.innerHTML =
+          '<p class="font-bold">' + ref + '</p>' +
+          '<p class="text-primary-700 font-bold text-xl mt-2">' + money(amount) + '</p>' +
+          '<p class="text-xs text-amber-700 mt-2">Could not load full details — you can still pay.</p>';
+      }
+    }
+
+    async function payPesapal() {
+      var msg = document.getElementById('msg');
+      msg.textContent = 'Connecting to Pesapal…';
+      try {
+        var path = (type === 'booking' || String(ref).indexOf('EB-') === 0)
+          ? '/payments/initiate-booking'
+          : '/payments/initiate';
+        var body = (type === 'booking' || String(ref).indexOf('EB-') === 0)
+          ? { bookingNumber: ref }
+          : { orderNumber: ref };
+        var r = await fetch(API + path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        var j = await r.json();
+        if (!r.ok) throw new Error(j.error || j.message || 'Payment start failed');
+        var url = (j.data && j.data.redirect_url) || j.redirect_url;
+        if (!url) throw new Error('No Pesapal redirect URL');
+        // Real Pesapal or demo page
+        msg.textContent = 'Redirecting to secure payment…';
+        location.href = url;
+      } catch (e) {
+        msg.textContent = e.message || 'Pesapal error';
+        msg.className = 'text-sm text-center text-red-600';
+      }
+    }
+
+    function showTill() {
+      var box = document.getElementById('altBox');
+      box.classList.remove('hidden');
+      box.innerHTML =
+        '<p class="font-semibold text-primary-800">Lipa / Till</p>' +
+        '<p>Number: <strong>' + TILL.number + '</strong></p>' +
+        '<p>Name: ' + TILL.name + '</p>' +
+        '<p>Amount: <strong>' + money(amount) + '</strong></p>' +
+        '<p>Reference: <strong>' + ref + '</strong></p>' +
+        '<p class="text-xs text-gray-500">' + TILL.note + '</p>' +
+        '<p class="text-xs mt-2">After paying, WhatsApp 0672 283 434 with your name + ' + ref + '</p>';
+    }
+
+    function showBank() {
+      var box = document.getElementById('altBox');
+      box.classList.remove('hidden');
+      box.innerHTML =
+        '<p class="font-semibold text-primary-800">Bank transfer</p>' +
+        '<p>Bank: ' + BANK.bank + '</p>' +
+        '<p>Account name: ' + BANK.accountName + '</p>' +
+        '<p>Account: ' + BANK.accountNumber + '</p>' +
+        '<p>Amount: <strong>' + money(amount) + '</strong></p>' +
+        '<p>Reference: <strong>' + ref + '</strong></p>' +
+        '<p class="text-xs text-gray-500">' + BANK.note + '</p>';
+    }
+
+    document.querySelectorAll('.pay-method').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.pay-method').forEach(function (b) {
+          b.classList.remove('border-primary-600');
+          b.classList.add('border-gray-100');
+        });
+        btn.classList.add('border-primary-600');
+        btn.classList.remove('border-gray-100');
+        var m = btn.getAttribute('data-method');
+        if (m === 'pesapal') payPesapal();
+        if (m === 'till') showTill();
+        if (m === 'bank') showBank();
+      });
+    });
+
+    loadSummary();
+  </script>
+</body>
+</html>
