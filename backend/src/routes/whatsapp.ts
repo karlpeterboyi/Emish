@@ -88,6 +88,162 @@ router.post('/webhook', async (req, res) => {
       return;
     }
 
+    // Active conversation steps take priority over menu numbers (so "2" = qty, not Services)
+    if (session.step && session.step !== 'idle') {
+      if (session.step === 'order_qty') {
+        const qty = parseInt(text, 10);
+        if (!qty || qty < 1 || qty > 20) {
+          await reply(from, 'Please send a quantity between 1 and 20.');
+          return;
+        }
+        session.data.qty = qty;
+        session.step = 'order_name';
+        await reply(from, 'Your full name?');
+        return;
+      }
+      if (session.step === 'order_name') {
+        session.data.customerName = text;
+        session.step = 'order_address';
+        await reply(from, 'Delivery address (street, area, city)?');
+        return;
+      }
+      if (session.step === 'order_address') {
+        session.data.address = text;
+        session.step = 'idle';
+        const d = session.data;
+        const total = d.price * d.qty;
+        const orderNumber =
+          'WA-' +
+          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+          '-' +
+          Math.random().toString(36).slice(2, 6).toUpperCase();
+        try {
+          const shippingFee = total >= 50000 ? 0 : 3000;
+          const order = await prisma.order.create({
+            data: {
+              orderNumber,
+              customerName: d.customerName,
+              customerPhone: from.startsWith('255') ? from : '255' + from.replace(/^0/, ''),
+              shippingAddress: d.address,
+              shippingCity: d.address.split(',').pop()?.trim() || 'Dar es Salaam',
+              subtotal: total,
+              shippingFee,
+              total: total + shippingFee,
+              paymentMethod: 'OTHER',
+              paymentStatus: 'PENDING',
+              status: 'PENDING',
+              items: {
+                create: [
+                  {
+                    productId: d.productId,
+                    productName: d.name,
+                    quantity: d.qty,
+                    unitPrice: d.price,
+                    totalPrice: d.price * d.qty,
+                  },
+                ],
+              },
+            },
+          });
+          const appUrl = (process.env.APP_URL || 'https://www.emish.store').replace(/\/$/, '');
+          const payUrl = `${appUrl}/pay.html?order=${encodeURIComponent(order.orderNumber)}&amount=${order.total}`;
+          await reply(
+            from,
+            `✅ Order *${order.orderNumber}*\n` +
+              `${d.name} × ${d.qty}\n` +
+              `Subtotal: TZS ${total.toLocaleString()}\n` +
+              `Delivery: TZS ${shippingFee.toLocaleString()}\n` +
+              `*Total: TZS ${order.total.toLocaleString()}*\n\n` +
+              `Pay (Pesapal · Till · Bank):\n${payUrl}\n\n` +
+              `Or reply: PAY ${order.orderNumber}`
+          );
+        } catch (e: any) {
+          console.error('WA order failed', e);
+          await reply(from, 'Could not create order. Type *1* to try again.');
+        }
+        return;
+      }
+      if (session.step === 'book_date') {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+          await reply(from, 'Use date format YYYY-MM-DD (example: 2026-10-30)');
+          return;
+        }
+        session.data.date = text;
+        const slotsRes = await fetch(
+          `http://127.0.0.1:${process.env.PORT || 4000}/api/bookings/slots?date=${text}&serviceSlug=${session.data.slug}`
+        ).catch(() => null);
+        let slotLines = 'Morning 10:00, 11:00 · Afternoon 14:00, 15:00, 16:00';
+        if (slotsRes && slotsRes.ok) {
+          const j = await slotsRes.json();
+          const slots = j.data?.slots || [];
+          if (slots.length) {
+            slotLines = slots.slice(0, 12).map((s: any) => s.time).join(', ');
+            session.data.available = slots;
+          } else {
+            await reply(from, 'No slots that day. Send another date YYYY-MM-DD');
+            return;
+          }
+        }
+        session.step = 'book_time';
+        await reply(from, `Available times on ${text}:\n${slotLines}\n\nReply with time e.g. 10:00`);
+        return;
+      }
+      if (session.step === 'book_time') {
+        const time = text.trim();
+        const date = session.data.date;
+        const iso = new Date(`${date}T${time}:00`);
+        if (isNaN(iso.getTime())) {
+          await reply(from, 'Invalid time. Use HH:MM e.g. 14:30');
+          return;
+        }
+        session.data.scheduledAt = iso.toISOString();
+        session.step = 'book_name';
+        await reply(from, 'Your full name for the booking?');
+        return;
+      }
+      if (session.step === 'book_name') {
+        session.data.customerName = text;
+        session.step = 'idle';
+        const d = session.data;
+        const bookingNumber =
+          'EB-' +
+          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+          '-' +
+          Math.random().toString(36).slice(2, 6).toUpperCase();
+        try {
+          const booking = await prisma.booking.create({
+            data: {
+              bookingNumber,
+              serviceId: d.serviceId,
+              customerName: d.customerName,
+              customerPhone: from.startsWith('255') ? from : '255' + from.replace(/^0/, ''),
+              scheduledAt: new Date(d.scheduledAt),
+              durationMinutes: d.duration,
+              price: d.price,
+              status: 'PENDING',
+              paymentStatus: 'PENDING',
+            },
+          });
+          const appUrl = (process.env.APP_URL || 'https://www.emish.store').replace(/\/$/, '');
+          const payUrl = `${appUrl}/pay.html?booking=${encodeURIComponent(booking.bookingNumber)}&amount=${booking.price}&type=booking`;
+          await reply(
+            from,
+            `✅ Booking *${booking.bookingNumber}*\n` +
+              `${d.name}\n` +
+              `When: ${new Date(d.scheduledAt).toLocaleString('en-TZ')}\n` +
+              `Amount: TZS ${d.price.toLocaleString()}\n\n` +
+              `Pay (Pesapal · Till · Bank):\n${payUrl}\n\n` +
+              `Or: PAY ${booking.bookingNumber}`
+          );
+        } catch (e: any) {
+          console.error('WA book failed', e);
+          await reply(from, 'Booking failed (slot may be taken). Type *2* to try again.');
+        }
+        return;
+      }
+    }
+
+
     if (upper === '1' || upper === 'SHOP' || upper.startsWith('SHOP')) {
       const products = await prisma.product.findMany({
         where: { isActive: true },
