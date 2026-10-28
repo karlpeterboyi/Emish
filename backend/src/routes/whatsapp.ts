@@ -91,15 +91,17 @@ router.post('/webhook', async (req, res) => {
     if (upper === '1' || upper === 'SHOP' || upper.startsWith('SHOP')) {
       const products = await prisma.product.findMany({
         where: { isActive: true },
-        take: 10,
-        orderBy: { createdAt: 'desc' },
+        take: 15,
+        orderBy: [{ nameEn: 'asc' }],
       });
+      // Remember list so ORDER 1..N matches exactly what we showed
+      session.data = { ...(session.data || {}), lastProductList: products.map((x) => x.id) };
       const lines = products.map(
-        (p, i) => `${i + 1}. *${p.nameEn}*\n   TZS ${p.price.toLocaleString()} — ORDER ${p.slug}`
+        (p, i) => `*${i + 1}.* *${p.nameEn}*\n   TZS ${p.price.toLocaleString()}\n   ORDER ${p.slug}`
       );
       await reply(
         from,
-        `*Products*\n\n${lines.join('\n\n')}\n\nReply: ORDER <slug>\nExample: ORDER glow-serum-vitamin-c`
+        `*Products*\n\n${lines.join('\n\n')}\n\nReply:\n• ORDER 9\n• ORDER shea-butter-hair-mask\n• ORDER Shea Butter Hair Mask`
       );
       return;
     }
@@ -162,15 +164,28 @@ router.post('/webhook', async (req, res) => {
     // ORDER <slug | name | list number>
     if (upper.startsWith('ORDER ')) {
       const rest = text.slice(6).trim();
+      // Same sort as the "1 / SHOP" list so numbers match
       const products = await prisma.product.findMany({
         where: { isActive: true },
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-        take: 30,
+        orderBy: [{ nameEn: 'asc' }],
+        take: 15,
       });
       let product = null as (typeof products)[0] | null;
       const asNum = parseInt(rest, 10);
-      if (String(asNum) === rest.trim() && asNum >= 1 && asNum <= products.length) {
-        product = products[asNum - 1];
+      if (String(asNum) === rest.trim() && asNum >= 1) {
+        // Prefer the exact list we last showed in this chat
+        const lastIds: string[] | undefined = session.data?.lastProductList;
+        if (lastIds && asNum <= lastIds.length) {
+          product = products.find((x) => x.id === lastIds[asNum - 1]) || null;
+          if (!product) {
+            const byId = await prisma.product.findFirst({
+              where: { id: lastIds[asNum - 1], isActive: true },
+            });
+            product = byId;
+          }
+        } else if (asNum <= products.length) {
+          product = products[asNum - 1];
+        }
       }
       if (!product) {
         const slugTry = rest.toLowerCase().replace(/\s+/g, '-');
