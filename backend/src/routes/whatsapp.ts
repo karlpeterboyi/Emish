@@ -58,16 +58,27 @@ router.get('/webhook', (req, res) => {
 });
 
 router.post('/webhook', async (req, res) => {
-  res.sendStatus(200); // ack fast
+  res.sendStatus(200); // ack fast — Meta requires quick 200
   try {
+    console.log('[WhatsApp] webhook POST', JSON.stringify(req.body)?.slice(0, 800));
+
+    if (!isWhatsAppConfigured()) {
+      console.warn('[WhatsApp] WHATSAPP_TOKEN or WHATSAPP_PHONE_ID missing on server — cannot reply');
+    }
+
     const entry = req.body?.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
     const msg = value?.messages?.[0];
-    if (!msg) return;
+    if (!msg) {
+      console.log('[WhatsApp] no messages[] in payload (status update?)');
+      return;
+    }
 
-    const from = msg.from; // 255...
-    const text = (msg.text?.body || '').trim();
+    const from = String(msg.from || ''); // 255...
+    const text = (msg.text?.body || msg.button?.text || msg.interactive?.button_reply?.title || '').trim();
+    console.log('[WhatsApp] from=', from, 'text=', text);
+    if (!from || !text) return;
     const upper = text.toUpperCase();
     const session = getSession(from);
 
@@ -100,12 +111,12 @@ router.post('/webhook', async (req, res) => {
         orderBy: { sortOrder: 'asc' },
       });
       const lines = services.map(
-        (s) =>
-          `• *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
+        (s, i) =>
+          `*${i + 1}.* *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
       );
       await reply(
         from,
-        `*Services*\n\n${lines.join('\n\n')}\n\nReply: BOOK <slug>\nThen we will ask for your preferred date.`
+        `*Services*\n\n${lines.join('\n\n')}\n\nReply with:\n• BOOK underarm-wax\n• BOOK Underarm Wax\n• BOOK 4\nThen we ask for your date.`
       );
       return;
     }
@@ -148,12 +159,32 @@ router.post('/webhook', async (req, res) => {
       return;
     }
 
-    // ORDER slug
+    // ORDER <slug | name | list number>
     if (upper.startsWith('ORDER ')) {
-      const slug = text.split(/\s+/)[1]?.toLowerCase();
-      const product = await prisma.product.findFirst({ where: { slug, isActive: true } });
+      const rest = text.slice(6).trim();
+      const products = await prisma.product.findMany({
+        where: { isActive: true },
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 30,
+      });
+      let product = null as (typeof products)[0] | null;
+      const asNum = parseInt(rest, 10);
+      if (String(asNum) === rest.trim() && asNum >= 1 && asNum <= products.length) {
+        product = products[asNum - 1];
+      }
       if (!product) {
-        await reply(from, 'Product not found. Type *1* to see the list.');
+        const slugTry = rest.toLowerCase().replace(/\s+/g, '-');
+        product = products.find((x) => x.slug === slugTry) || null;
+      }
+      if (!product) {
+        const q = rest.toLowerCase();
+        product =
+          products.find((x) => x.nameEn.toLowerCase() === q) ||
+          products.find((x) => x.nameEn.toLowerCase().includes(q) || x.slug.includes(q.replace(/\s+/g, '-'))) ||
+          null;
+      }
+      if (!product) {
+        await reply(from, 'Product not found. Type *1* to see the list.\nTry: ORDER glow-serum-vitamin-c or ORDER 1');
         return;
       }
       session.step = 'order_qty';
@@ -239,14 +270,54 @@ router.post('/webhook', async (req, res) => {
       return;
     }
 
-    // BOOK slug
+    // BOOK <slug | name | list number>
     if (upper.startsWith('BOOK ')) {
-      const slug = text.split(/\s+/)[1]?.toLowerCase();
-      const service = await prisma.service.findFirst({ where: { slug, isActive: true } });
+      const rest = text.slice(5).trim(); // after "BOOK "
+      const services = await prisma.service.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+        take: 30,
+      });
+
+      let service = null as (typeof services)[0] | null;
+
+      // 1) numeric index from list (BOOK 1, BOOK 3)
+      const asNum = parseInt(rest, 10);
+      if (String(asNum) === rest.trim() && asNum >= 1 && asNum <= services.length) {
+        service = services[asNum - 1];
+      }
+
+      // 2) exact slug
       if (!service) {
-        await reply(from, 'Service not found. Type *2* for the list.');
+        const slugTry = rest.toLowerCase().replace(/\s+/g, '-');
+        service = services.find((s) => s.slug === slugTry) || null;
+      }
+
+      // 3) name match (case-insensitive contains / equals)
+      if (!service) {
+        const q = rest.toLowerCase();
+        service =
+          services.find((s) => s.nameEn.toLowerCase() === q || s.nameSw?.toLowerCase() === q) ||
+          services.find(
+            (s) =>
+              s.nameEn.toLowerCase().includes(q) ||
+              (s.nameSw && s.nameSw.toLowerCase().includes(q)) ||
+              s.slug.includes(q.replace(/\s+/g, '-'))
+          ) ||
+          null;
+      }
+
+      if (!service) {
+        await reply(
+          from,
+          'Service not found.\n\nUse one of:\n' +
+            '• BOOK underarm-wax\n' +
+            '• BOOK Underarm Wax\n' +
+            '• BOOK 4  (number from the list)\n\nType *2* to see the list again.'
+        );
         return;
       }
+
       session.step = 'book_date';
       session.data = {
         serviceId: service.id,
@@ -258,7 +329,7 @@ router.post('/webhook', async (req, res) => {
       await reply(
         from,
         `*${service.nameEn}* — TZS ${service.price.toLocaleString()} (${service.durationMinutes} min)\n\n` +
-          `Send preferred date as YYYY-MM-DD\nExample: 2026-10-25`
+          `Send preferred date as YYYY-MM-DD\nExample: 2026-10-28`
       );
       return;
     }
@@ -388,6 +459,9 @@ router.get('/status', (_req, res) => {
     success: true,
     configured: isWhatsAppConfigured(),
     verifyTokenSet: Boolean(process.env.WHATSAPP_VERIFY_TOKEN),
+    phoneIdSet: Boolean(process.env.WHATSAPP_PHONE_ID && !String(process.env.WHATSAPP_PHONE_ID).includes('your_')),
+    tokenSet: Boolean(process.env.WHATSAPP_TOKEN && !String(process.env.WHATSAPP_TOKEN).includes('your_')),
+    webhookPath: '/api/whatsapp/webhook',
   });
 });
 
