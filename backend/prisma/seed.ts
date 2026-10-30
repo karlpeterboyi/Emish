@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 // High-quality free images (Unsplash) suitable for beauty catalog demos
 const IMG = {
-  serum: 'https://images.unsplash.com/photo-1620916564896-f4f0f1f1f1f1?w=600&q=80',
+  serum: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600&q=80',
   // fallbacks that load reliably:
   bottle: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&q=80',
   cream: 'https://images.unsplash.com/photo-1570194065650-d99fb4b38b17?w=600&q=80',
@@ -283,6 +283,7 @@ async function main() {
       p.categorySlug === 'body' ? body :
       p.categorySlug === 'bundles' ? bundles :
       skincare;
+    const imagesJson = JSON.stringify((p as any).images || []);
     await prisma.product.upsert({
       where: { slug: p.slug },
       update: {
@@ -293,6 +294,8 @@ async function main() {
         price: p.price,
         stock: p.stock,
         categoryId: cat.id,
+        images: imagesJson,
+        isFeatured: !!(p as any).isFeatured,
         isActive: true,
       },
       create: {
@@ -304,7 +307,8 @@ async function main() {
         price: p.price,
         stock: p.stock,
         categoryId: cat.id,
-        images: JSON.stringify([]),
+        images: imagesJson,
+        isFeatured: !!(p as any).isFeatured,
         isActive: true,
       },
     });

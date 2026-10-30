@@ -33,6 +33,22 @@ export async function bootstrapDatabase() {
     console.warn('[DB] count failed (schema may still be settling):', err?.message || err);
   }
 
+  const forceCatalog = process.env.SEED_CATALOG === '1' || process.env.SEED_CATALOG === 'true';
+  if (forceCatalog) {
+    try {
+      console.log('[DB] SEED_CATALOG=1 — refreshing full catalog…');
+      execSync('npx tsx prisma/seed.ts', {
+        stdio: 'inherit',
+        env: process.env,
+        timeout: 180_000,
+      });
+      console.log('[DB] catalog refresh complete');
+    } catch (err: any) {
+      console.error('[DB] catalog seed failed:', err?.message || err);
+    }
+    return;
+  }
+
   try {
     console.log('[DB] empty database — running seed…');
     execSync('npx tsx prisma/seed.ts', {
