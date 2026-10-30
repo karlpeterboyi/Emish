@@ -313,6 +313,22 @@ async function main() {
       },
     });
   }
+
+  // Retire old product slugs renamed in catalog update
+  const retiredSlugs = [
+    'forever-multi-macce',
+    'dettol-skin-care',
+    'cos-skin-collagen-night',
+    'nivea-miracle-water',
+    'skin-therapy',
+    'rosehip-oil-facial-oil',
+    'cos-skin-kojic-acid-mask',
+  ];
+  await prisma.product.updateMany({
+    where: { slug: { in: retiredSlugs } },
+    data: { isActive: false },
+  });
+
   console.log('   Catalog products upserted:', EMISH_PRODUCTS.length);
 
   const adminPass = await bcrypt.hash('admin123', 12);
