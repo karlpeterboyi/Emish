@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { EMISH_SERVICES, EMISH_SERVICE_CATEGORIES, EMISH_PRODUCTS } from './emish-catalog';
 
 const prisma = new PrismaClient();
 
@@ -229,102 +230,86 @@ async function main() {
   }
 
 
-  // —— Spa services ——
-  const massageCat = await prisma.serviceCategory.upsert({
-    where: { slug: 'massage' },
-    update: {},
-    create: { slug: 'massage', nameEn: 'Massage', nameSw: 'Massage', sortOrder: 1 },
-  });
-  const waxCat = await prisma.serviceCategory.upsert({
-    where: { slug: 'waxing' },
-    update: {},
-    create: { slug: 'waxing', nameEn: 'Waxing', nameSw: 'Kuondoa Nyooya', sortOrder: 2 },
-  });
-  const facialCat = await prisma.serviceCategory.upsert({
-    where: { slug: 'facial' },
-    update: {},
-    create: { slug: 'facial', nameEn: 'Facial', nameSw: 'Huduma ya Uso', sortOrder: 3 },
-  });
-  const nailsCat = await prisma.serviceCategory.upsert({
-    where: { slug: 'nails' },
-    update: {},
-    create: { slug: 'nails', nameEn: 'Nails', nameSw: 'Kucha', sortOrder: 4 },
-  });
+  // —— Spa services (full Emish menu) ——
+  const serviceCatMap: Record<string, string> = {};
+  for (const c of EMISH_SERVICE_CATEGORIES) {
+    const row = await prisma.serviceCategory.upsert({
+      where: { slug: c.slug },
+      update: { nameEn: c.nameEn, nameSw: c.nameSw, sortOrder: c.sortOrder },
+      create: { slug: c.slug, nameEn: c.nameEn, nameSw: c.nameSw, sortOrder: c.sortOrder },
+    });
+    serviceCatMap[c.slug] = row.id;
+  }
 
-  const spaServices = [
-    {
-      slug: 'swedish-massage-60',
-      nameEn: 'Swedish Massage (60 min)',
-      nameSw: 'Swedish Massage (dakika 60)',
-      descriptionEn: 'Classic full-body relaxation massage to ease muscle tension and improve circulation.',
-      descriptionSw: 'Massage ya mwili mzima kupumzisha misuli na kuboresha mzunguko wa damu.',
-      durationMinutes: 60,
-      price: 45000,
-      categoryId: massageCat.id,
-      isFeatured: true,
-    },
-    {
-      slug: 'deep-tissue-90',
-      nameEn: 'Deep Tissue Massage (90 min)',
-      nameSw: 'Deep Tissue Massage (dakika 90)',
-      descriptionEn: 'Firm pressure focused on deeper muscle layers — ideal after long work weeks.',
-      descriptionSw: 'Shinikizo kali kwa misuli ya kina — bora baada ya wiki ndefu za kazi.',
-      durationMinutes: 90,
-      price: 65000,
-      categoryId: massageCat.id,
-      isFeatured: true,
-    },
-    {
-      slug: 'full-leg-wax',
-      nameEn: 'Full Leg Wax',
-      nameSw: 'Wax ya Miguu Yote',
-      descriptionEn: 'Professional full leg waxing for smooth results that last weeks.',
-      descriptionSw: 'Wax ya miguu yote kwa matokeo laini yanayodumu wiki nyingi.',
-      durationMinutes: 45,
-      price: 35000,
-      categoryId: waxCat.id,
-    },
-    {
-      slug: 'underarm-wax',
-      nameEn: 'Underarm Wax',
-      nameSw: 'Wax ya Kwetu',
-      descriptionEn: 'Quick, careful underarm wax with soothing aftercare.',
-      descriptionSw: 'Wax ya kwapa kwa haraka na uangalifu.',
-      durationMinutes: 20,
-      price: 15000,
-      categoryId: waxCat.id,
-    },
-    {
-      slug: 'glow-facial',
-      nameEn: 'Glow Facial',
-      nameSw: 'Facial ya Kung\'aa',
-      descriptionEn: 'Cleansing, exfoliation, mask and massage tailored for African skin tones.',
-      descriptionSw: 'Usafi, peeling, maski na massage kwa rangi za ngozi za Kiafrika.',
-      durationMinutes: 60,
-      price: 40000,
-      categoryId: facialCat.id,
-      isFeatured: true,
-    },
-    {
-      slug: 'gel-manicure',
-      nameEn: 'Gel Manicure',
-      nameSw: 'Manicure ya Gel',
-      descriptionEn: 'Shape, cuticle care and long-lasting gel polish.',
-      descriptionSw: 'Kukata, kutunza cuticle na gel polish inayodumu.',
-      durationMinutes: 50,
-      price: 25000,
-      categoryId: nailsCat.id,
-    },
-  ];
-
-  for (const s of spaServices) {
+  for (const s of EMISH_SERVICES) {
+    const categoryId = serviceCatMap[s.categorySlug];
+    if (!categoryId) continue;
+    const { categorySlug, ...rest } = s as any;
     await prisma.service.upsert({
       where: { slug: s.slug },
-      update: s,
-      create: s,
+      update: {
+        nameEn: s.nameEn,
+        nameSw: s.nameSw,
+        descriptionEn: s.descriptionEn,
+        descriptionSw: s.descriptionSw,
+        durationMinutes: s.durationMinutes,
+        price: s.price,
+        categoryId,
+        isFeatured: s.isFeatured,
+        sortOrder: s.sortOrder,
+        isActive: true,
+      },
+      create: {
+        slug: s.slug,
+        nameEn: s.nameEn,
+        nameSw: s.nameSw,
+        descriptionEn: s.descriptionEn,
+        descriptionSw: s.descriptionSw,
+        durationMinutes: s.durationMinutes,
+        price: s.price,
+        categoryId,
+        isFeatured: s.isFeatured,
+        sortOrder: s.sortOrder,
+        isActive: true,
+      },
     });
   }
-  console.log('   Services:', spaServices.length);
+  console.log('   Services:', EMISH_SERVICES.length);
+
+  // Extra retail products from Emish list (upsert by slug)
+  for (const p of EMISH_PRODUCTS) {
+    const cat =
+      p.categorySlug === 'haircare' ? haircare :
+      p.categorySlug === 'body' ? body :
+      p.categorySlug === 'bundles' ? bundles :
+      skincare;
+    await prisma.product.upsert({
+      where: { slug: p.slug },
+      update: {
+        nameEn: p.nameEn,
+        nameSw: p.nameSw,
+        descriptionEn: p.descriptionEn,
+        descriptionSw: p.descriptionSw,
+        price: p.price,
+        stock: p.stock,
+        categoryId: cat.id,
+        isActive: true,
+      },
+      create: {
+        slug: p.slug,
+        nameEn: p.nameEn,
+        nameSw: p.nameSw,
+        descriptionEn: p.descriptionEn,
+        descriptionSw: p.descriptionSw,
+        price: p.price,
+        stock: p.stock,
+        categoryId: cat.id,
+        images: JSON.stringify([]),
+        isActive: true,
+      },
+    });
+  }
+  console.log('   Catalog products upserted:', EMISH_PRODUCTS.length);
 
   const adminPass = await bcrypt.hash('admin123', 12);
   await prisma.user.upsert({
