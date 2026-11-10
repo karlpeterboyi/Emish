@@ -241,6 +241,123 @@ router.post('/webhook', async (req, res) => {
         }
         return;
       }
+
+      // Browse services by category (must stay above menu 1/2)
+      if (session.step === 'svc_cats') {
+        const cats =
+          session.data.categories ||
+          (await prisma.serviceCategory.findMany({ orderBy: { sortOrder: 'asc' } })).map((c) => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.nameEn,
+          }));
+        const asNum = parseInt(text, 10);
+        if (!(String(asNum) === text.trim() && asNum >= 1 && asNum <= cats.length)) {
+          await reply(from, 'Send a category number from the list, or type *2* again.');
+          return;
+        }
+        const cat = cats[asNum - 1];
+        const pageSize = 8;
+        const services = await prisma.service.findMany({
+          where: { isActive: true, categoryId: cat.id },
+          orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
+        });
+        if (!services.length) {
+          await reply(from, `No services in *${cat.name}* yet. Type *2* for other categories.`);
+          return;
+        }
+        session.step = 'svc_list';
+        session.data = {
+          ...session.data,
+          categoryId: cat.id,
+          categoryName: cat.name,
+          servicePage: 0,
+          lastServiceList: services.map((s) => ({
+            id: s.id,
+            slug: s.slug,
+            nameEn: s.nameEn,
+            price: s.price,
+            durationMinutes: s.durationMinutes,
+          })),
+        };
+        const page = services.slice(0, pageSize);
+        const lines = page.map(
+          (s, i) =>
+            `*${i + 1}.* *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
+        );
+        const more =
+          services.length > pageSize
+            ? `\n\nShowing 1–${page.length} of ${services.length}. Type *MORE* for next.`
+            : '';
+        await reply(
+          from,
+          `*${cat.name}*\n\n` +
+            lines.join('\n\n') +
+            more +
+            `\n\nReply:\n• BOOK 1\n• BOOK ${page[0]?.slug || 'slug'}\n• *2* categories`
+        );
+        return;
+      }
+
+      if (session.step === 'svc_list') {
+        if (upper === 'MORE' && session.data.lastServiceList?.length) {
+          const pageSize = 8;
+          const list = session.data.lastServiceList as any[];
+          let pageIdx = (session.data.servicePage || 0) + 1;
+          if (pageIdx * pageSize >= list.length) pageIdx = 0;
+          session.data.servicePage = pageIdx;
+          const start = pageIdx * pageSize;
+          const page = list.slice(start, start + pageSize);
+          const lines = page.map(
+            (s: any, i: number) =>
+              `*${start + i + 1}.* *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
+          );
+          const end = Math.min(start + page.length, list.length);
+          await reply(
+            from,
+            `*${session.data.categoryName || 'Services'}* (${start + 1}–${end} of ${list.length})\n\n` +
+              lines.join('\n\n') +
+              `\n\nBOOK <number> · *MORE* · *2* categories`
+          );
+          return;
+        }
+        // plain number → BOOK n from current category list
+        const asNum = parseInt(text, 10);
+        const list = (session.data.lastServiceList || []) as any[];
+        if (String(asNum) === text.trim() && asNum >= 1 && asNum <= list.length) {
+          const hit = list[asNum - 1];
+          const service = await prisma.service.findFirst({
+            where: { OR: [{ id: hit.id }, { slug: hit.slug }], isActive: true },
+          });
+          if (!service) {
+            await reply(from, 'Service not found. Type *2* to browse again.');
+            return;
+          }
+          session.step = 'book_date';
+          session.data = {
+            ...session.data,
+            serviceId: service.id,
+            slug: service.slug,
+            name: service.nameEn,
+            price: service.price,
+            duration: service.durationMinutes,
+          };
+          await reply(
+            from,
+            `*${service.nameEn}* — TZS ${service.price.toLocaleString()} (${service.durationMinutes} min)\n\n` +
+              `Send preferred date as YYYY-MM-DD\nExample: 2026-11-12`
+          );
+          return;
+        }
+        // otherwise stay on list (user may type BOOK slug)
+        if (upper !== 'MORE' && !upper.startsWith('BOOK')) {
+          await reply(
+            from,
+            'Reply *BOOK 1* (or the number), *BOOK <slug>*, *MORE*, or *2* for categories.'
+          );
+          return;
+        }
+      }
     }
 
 
@@ -263,21 +380,125 @@ router.post('/webhook', async (req, res) => {
     }
 
     if (upper === '2' || upper === 'BOOK' || upper === 'BOOKING') {
-      const services = await prisma.service.findMany({
-        where: { isActive: true },
-        take: 10,
+      const cats = await prisma.serviceCategory.findMany({
         orderBy: { sortOrder: 'asc' },
       });
-      const lines = services.map(
-        (s, i) =>
-          `*${i + 1}.* *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
-      );
+      if (!cats.length) {
+        await reply(from, 'No service categories yet. Call 0672 283 434.');
+        return;
+      }
+      session.step = 'svc_cats';
+      session.data = { categories: cats.map((c) => ({ id: c.id, slug: c.slug, name: c.nameEn })) };
+      const lines = cats.map((c, i) => `*${i + 1}.* ${c.nameEn}${c.nameSw ? ` (${c.nameSw})` : ''}`);
       await reply(
         from,
-        `*Services*\n\n${lines.join('\n\n')}\n\nReply with:\n• BOOK underarm-wax\n• BOOK Underarm Wax\n• BOOK 4\nThen we ask for your date.`
+        `*Book a service — choose category*\n\n` +
+          lines.join('\n') +
+          `\n\nReply with a number (e.g. *1*) or:\nCAT massage\nCAT body-contour\n\nThen pick a service.`
       );
       return;
     }
+
+    // Category pick: number while in svc_cats, or CAT <slug|number>
+    if (session.step === 'svc_cats' || upper.startsWith('CAT ')) {
+      let catId: string | null = null;
+      let catName = '';
+      const cats =
+        session.data.categories ||
+        (
+          await prisma.serviceCategory.findMany({ orderBy: { sortOrder: 'asc' } })
+        ).map((c) => ({ id: c.id, slug: c.slug, name: c.nameEn }));
+
+      if (upper.startsWith('CAT ')) {
+        const rest = text.slice(4).trim().toLowerCase();
+        const asNum = parseInt(rest, 10);
+        const hit =
+          (String(asNum) === rest && cats[asNum - 1]) ||
+          cats.find((c: any) => c.slug === rest || c.name.toLowerCase() === rest);
+        if (hit) {
+          catId = hit.id;
+          catName = hit.name;
+        }
+      } else if (session.step === 'svc_cats') {
+        const asNum = parseInt(text, 10);
+        if (String(asNum) === text.trim() && asNum >= 1 && asNum <= cats.length) {
+          catId = cats[asNum - 1].id;
+          catName = cats[asNum - 1].name;
+        }
+      }
+
+      if (!catId) {
+        if (session.step === 'svc_cats') {
+          await reply(from, 'Send a category number from the list, or CAT massage');
+          return;
+        }
+      } else {
+        const pageSize = 8;
+        const services = await prisma.service.findMany({
+          where: { isActive: true, categoryId: catId },
+          orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
+        });
+        if (!services.length) {
+          await reply(from, `No services in *${catName}* yet. Type *2* for categories.`);
+          return;
+        }
+        session.step = 'svc_list';
+        session.data = {
+          ...session.data,
+          categoryId: catId,
+          categoryName: catName,
+          servicePage: 0,
+          lastServiceList: services.map((s) => ({
+            id: s.id,
+            slug: s.slug,
+            nameEn: s.nameEn,
+            price: s.price,
+            durationMinutes: s.durationMinutes,
+          })),
+        };
+        const page = services.slice(0, pageSize);
+        const lines = page.map(
+          (s, i) =>
+            `*${i + 1}.* *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
+        );
+        const more =
+          services.length > pageSize
+            ? `\n\nShowing 1–${page.length} of ${services.length}. Type *MORE* for next page.`
+            : '';
+        await reply(
+          from,
+          `*${catName}*\n\n` +
+            lines.join('\n\n') +
+            more +
+            `\n\nReply:\n• BOOK 1  (number on this list)\n• BOOK ${page[0]?.slug || 'slug'}\n• *2* categories again`
+        );
+        return;
+      }
+    }
+
+    // MORE — next page of services in category
+    if (upper === 'MORE' && session.step === 'svc_list' && session.data.lastServiceList?.length) {
+      const pageSize = 8;
+      const list = session.data.lastServiceList as any[];
+      let pageIdx = (session.data.servicePage || 0) + 1;
+      if (pageIdx * pageSize >= list.length) pageIdx = 0; // wrap
+      session.data.servicePage = pageIdx;
+      const start = pageIdx * pageSize;
+      const page = list.slice(start, start + pageSize);
+      const lines = page.map(
+        (s: any, i: number) =>
+          `*${start + i + 1}.* *${s.nameEn}*\n  TZS ${s.price.toLocaleString()} · ${s.durationMinutes} min\n  BOOK ${s.slug}`
+      );
+      const end = Math.min(start + page.length, list.length);
+      await reply(
+        from,
+        `*${session.data.categoryName || 'Services'}* (${start + 1}–${end} of ${list.length})\n\n` +
+          lines.join('\n\n') +
+          `\n\nBOOK <number> or BOOK <slug> · *MORE* · *2* categories`
+      );
+      return;
+    }
+
 
     if (upper === '3' || upper.startsWith('STATUS')) {
       const ref = text.split(/\s+/)[1];
@@ -443,33 +664,40 @@ router.post('/webhook', async (req, res) => {
 
     // BOOK <slug | name | list number>
     if (upper.startsWith('BOOK ')) {
-      const rest = text.slice(5).trim(); // after "BOOK "
-      const services = await prisma.service.findMany({
+      const rest = text.slice(5).trim();
+      const allServices = await prisma.service.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
-        take: 30,
+        orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
       });
 
-      let service = null as (typeof services)[0] | null;
+      let service = null as (typeof allServices)[0] | null;
 
-      // 1) numeric index from list (BOOK 1, BOOK 3)
+      // 1) numeric index from LAST shown list (preferred)
       const asNum = parseInt(rest, 10);
-      if (String(asNum) === rest.trim() && asNum >= 1 && asNum <= services.length) {
-        service = services[asNum - 1];
+      if (String(asNum) === rest.trim() && asNum >= 1) {
+        const last = (session.data.lastServiceList || []) as any[];
+        if (last.length && asNum <= last.length) {
+          const hit = last[asNum - 1];
+          service = allServices.find((s) => s.id === hit.id || s.slug === hit.slug) || null;
+        }
+        // fallback: global index (avoid if list was category-scoped)
+        if (!service && asNum <= allServices.length && !last.length) {
+          service = allServices[asNum - 1];
+        }
       }
 
       // 2) exact slug
       if (!service) {
         const slugTry = rest.toLowerCase().replace(/\s+/g, '-');
-        service = services.find((s) => s.slug === slugTry) || null;
+        service = allServices.find((s) => s.slug === slugTry) || null;
       }
 
-      // 3) name match (case-insensitive contains / equals)
+      // 3) name match
       if (!service) {
         const q = rest.toLowerCase();
         service =
-          services.find((s) => s.nameEn.toLowerCase() === q || s.nameSw?.toLowerCase() === q) ||
-          services.find(
+          allServices.find((s) => s.nameEn.toLowerCase() === q || s.nameSw?.toLowerCase() === q) ||
+          allServices.find(
             (s) =>
               s.nameEn.toLowerCase().includes(q) ||
               (s.nameSw && s.nameSw.toLowerCase().includes(q)) ||
@@ -481,16 +709,17 @@ router.post('/webhook', async (req, res) => {
       if (!service) {
         await reply(
           from,
-          'Service not found.\n\nUse one of:\n' +
+          'Service not found.\n\nUse:\n' +
+            '• *2* → pick category → BOOK 3\n' +
             '• BOOK underarm-wax\n' +
-            '• BOOK Underarm Wax\n' +
-            '• BOOK 4  (number from the list)\n\nType *2* to see the list again.'
+            '• BOOK Underarm Wax\n\nType *2* to browse by category.'
         );
         return;
       }
 
       session.step = 'book_date';
       session.data = {
+        ...session.data,
         serviceId: service.id,
         slug: service.slug,
         name: service.nameEn,
@@ -500,10 +729,11 @@ router.post('/webhook', async (req, res) => {
       await reply(
         from,
         `*${service.nameEn}* — TZS ${service.price.toLocaleString()} (${service.durationMinutes} min)\n\n` +
-          `Send preferred date as YYYY-MM-DD\nExample: 2026-10-28`
+          `Send preferred date as YYYY-MM-DD\nExample: 2026-11-12`
       );
       return;
     }
+
 
     if (session.step === 'book_date') {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
