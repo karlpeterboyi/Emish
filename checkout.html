@@ -123,8 +123,8 @@
               <label for="pay_bank" class="flex items-center gap-3 p-4 border-2 border-primary-200 rounded-xl cursor-pointer peer-checked:border-primary-600 peer-checked:bg-primary-50">
                 <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl">🏦</div>
                 <div>
-                  <p class="font-medium">Bank transfer (NMB)</p>
-                  <p class="text-xs text-gray-500">22610039401 · EMISH INTERPRISES</p>
+                  <p class="font-medium">Bank transfer (NMB / CRDB)</p>
+                  <p class="text-xs text-gray-500">NMB 22610039401 · CRDB 0152455596700 · EMISH</p>
                 </div>
               </label>
             </div>
@@ -134,7 +134,7 @@
                 <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-xl">📲</div>
                 <div>
                   <p class="font-medium">Till / Lipa number</p>
-                  <p class="text-xs text-gray-500">Mixx by Yas 578 3656 · EMISH · Voda 570 5573</p>
+                  <p class="text-xs text-gray-500">Tigo 5783656 · Voda 54965034 · CRDB Lipa 106711602</p>
                 </div>
               </label>
             </div>
@@ -307,7 +307,7 @@ document.getElementById('applyRefBtn').addEventListener('click', () => {
       async function resolveApiProductIds(items) {
         // Map local numeric ids to backend UUIDs via slug
         try {
-          var API = localStorage.getItem('emish_api_url') || localStorage.getItem('niffer_api_url') || 'https://emish-api.onrender.com/api';
+          var API = (function(){var s=localStorage.getItem('emish_api_url')||localStorage.getItem('niffer_api_url');if(s)return s;var h=location.hostname;if(h==='localhost'||h==='127.0.0.1')return 'https://emish-api.onrender.com/api';return 'https://emish-api.onrender.com/api';})();
           var r = await fetch(API + '/products?limit=100');
           if (!r.ok) return items;
           var j = await r.json();

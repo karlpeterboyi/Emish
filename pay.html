@@ -67,15 +67,19 @@
     var ref = booking || order;
 
     var TILL = {
-      name: 'Emish Beauty Spa',
-      number: '0672 283 434',
-      note: 'Use your booking/order number as the reference'
+      lines: [
+        { network: 'Tigo / Mixx by Yas (Lipa Tigo)', number: '5783656', name: 'EMISH EMISH' },
+        { network: 'Vodacom M-Pesa (Lipa Voda)', number: '54965034', name: 'EMISH INTERPRISES1' },
+        { network: 'CRDB Lipa', number: '106711602', name: 'EMISH INTERPRISES' }
+      ],
+      note: 'Hatupokei cash. Tumia namba ya oda/booking kama kumbukumbu (reference).'
     };
     var BANK = {
-      bank: 'CRDB / NMB (confirm with branch)',
-      accountName: 'Emish Beauty Spa',
-      accountNumber: 'Contact 0672 283 434 for account number',
-      note: 'Send SMS/WhatsApp with transfer proof + reference'
+      accounts: [
+        { bank: 'NMB', accountName: 'NMB EMISH INTERPRISE', accountNumber: '22610039401' },
+        { bank: 'CRDB', accountName: 'EMISH INTERPRISES', accountNumber: '0152455596700' }
+      ],
+      note: 'Baada ya kuweka, tuma risiti + reference WhatsApp 0672 283 434. Hatupokei cash.'
     };
 
     function money(n) {
@@ -155,27 +159,36 @@
     function showTill() {
       var box = document.getElementById('altBox');
       box.classList.remove('hidden');
+      var rows = (TILL.lines || []).map(function (l) {
+        return '<div class="border border-primary-100 rounded-xl p-3 mb-2">' +
+          '<p class="text-xs text-primary-700 font-medium">' + l.network + '</p>' +
+          '<p class="text-lg font-bold tracking-wide">' + l.number + '</p>' +
+          '<p class="text-sm text-gray-600">' + l.name + '</p></div>';
+      }).join('');
       box.innerHTML =
-        '<p class="font-semibold text-primary-800">Lipa / Till</p>' +
-        '<p>Number: <strong>' + TILL.number + '</strong></p>' +
-        '<p>Name: ' + TILL.name + '</p>' +
-        '<p>Amount: <strong>' + money(amount) + '</strong></p>' +
+        '<p class="font-semibold text-primary-800 mb-2">Fanya malipo hapa — Lipa / Till</p>' +
+        rows +
+        '<p class="mt-2">Amount: <strong>' + money(amount) + '</strong></p>' +
         '<p>Reference: <strong>' + ref + '</strong></p>' +
-        '<p class="text-xs text-gray-500">' + TILL.note + '</p>' +
-        '<p class="text-xs mt-2">After paying, WhatsApp 0672 283 434 with your name + ' + ref + '</p>';
+        '<p class="text-xs text-gray-500 mt-2">' + TILL.note + '</p>' +
+        '<p class="text-xs mt-1">WhatsApp risiti: 0672 283 434</p>';
     }
 
     function showBank() {
       var box = document.getElementById('altBox');
       box.classList.remove('hidden');
+      var rows = (BANK.accounts || []).map(function (a) {
+        return '<div class="border border-primary-100 rounded-xl p-3 mb-2">' +
+          '<p class="text-xs text-primary-700 font-medium">' + a.bank + '</p>' +
+          '<p class="font-semibold">' + a.accountName + '</p>' +
+          '<p class="text-lg font-bold tracking-wide">' + a.accountNumber + '</p></div>';
+      }).join('');
       box.innerHTML =
-        '<p class="font-semibold text-primary-800">Bank transfer</p>' +
-        '<p>Bank: ' + BANK.bank + '</p>' +
-        '<p>Account name: ' + BANK.accountName + '</p>' +
-        '<p>Account: ' + BANK.accountNumber + '</p>' +
-        '<p>Amount: <strong>' + money(amount) + '</strong></p>' +
+        '<p class="font-semibold text-primary-800 mb-2">Bank transfer</p>' +
+        rows +
+        '<p class="mt-2">Amount: <strong>' + money(amount) + '</strong></p>' +
         '<p>Reference: <strong>' + ref + '</strong></p>' +
-        '<p class="text-xs text-gray-500">' + BANK.note + '</p>';
+        '<p class="text-xs text-gray-500 mt-2">' + BANK.note + '</p>';
     }
 
     document.querySelectorAll('.pay-method').forEach(function (btn) {
