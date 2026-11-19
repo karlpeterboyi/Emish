@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 // GET /api/products - list with filters
 router.get('/', async (req, res, next) => {
   try {
-    const { category, search, featured, page = '1', limit = '20' } = req.query;
+    const { category, search, featured, page = '1', limit = '100' } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = { isActive: true };
@@ -100,12 +100,14 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res, next)
       howToUseEn: z.string().optional(),
       howToUseSw: z.string().optional(),
       ingredients: z.string().optional(),
+      isActive: z.boolean().optional(),
     });
     const data = schema.parse(req.body);
 
     const product = await prisma.product.create({
       data: {
         ...data,
+        isActive: data.isActive !== false,
         images: JSON.stringify(data.images || []),
       },
     });
@@ -140,6 +142,7 @@ router.patch('/:id', authenticate, requireAdmin, async (req: AuthRequest, res, n
     const data = z.object({
       nameEn: z.string().optional(),
       nameSw: z.string().optional(),
+      slug: z.string().optional(),
       descriptionEn: z.string().optional(),
       descriptionSw: z.string().optional(),
       price: z.number().int().positive().optional(),
@@ -150,7 +153,9 @@ router.patch('/:id', authenticate, requireAdmin, async (req: AuthRequest, res, n
       images: z.array(z.string()).optional(),
       categoryId: z.string().optional(),
     }).parse(req.body);
-    const product = await prisma.product.update({ where: { id: req.params.id }, data });
+    const update: any = { ...data };
+    if (data.images) update.images = JSON.stringify(data.images);
+    const product = await prisma.product.update({ where: { id: req.params.id }, data: update });
     res.json({ success: true, data: product });
   } catch (err) {
     next(err);

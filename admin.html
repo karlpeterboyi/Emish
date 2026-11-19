@@ -256,7 +256,7 @@
   </div>
 
   <script>
-    var API = localStorage.getItem('emish_api_url') || 'https://emish-api.onrender.com/api';
+    var API = localStorage.getItem('emish_api_url') || (function(){var s=localStorage.getItem('emish_api_url')||localStorage.getItem('niffer_api_url');if(s)return s;var h=location.hostname;if(h==='localhost'||h==='127.0.0.1')return 'https://emish-api.onrender.com/api';return 'https://emish-api.onrender.com/api';})();
     function tok() { return localStorage.getItem('emish_token') || localStorage.getItem('niffer_token') || ''; }
     function money(n) { return new Intl.NumberFormat('en-TZ').format(n||0) + ' TZS'; }
     async function api(path, opts) {
@@ -357,71 +357,231 @@
       box.innerHTML = 'Loading…';
       try {
         var j = await api('/admin/products');
-        var rows = (j.data||[]).map(function(p){
-          return '<tr class="border-t">'+
-            '<td class="p-2">'+p.nameEn+'</td>'+
-            '<td class="p-2 text-xs">'+p.slug+'</td>'+
-            '<td class="p-2"><input data-id="'+p.id+'" class="price w-24 border rounded px-1" type="number" value="'+p.price+'"></td>'+
-            '<td class="p-2"><input data-id="'+p.id+'" class="stock w-16 border rounded px-1" value="'+p.stock+'"></td>'+
-            '<td class="p-2 text-xs">'+(p.isActive?'Active':'Off')+'</td>'+
-            '<td class="p-2 space-x-1">'+
-              '<button data-id="'+p.id+'" class="saveP text-pink-600 text-xs font-medium">Update</button>'+
-              '<button data-id="'+p.id+'" class="delP text-red-600 text-xs">Delete</button>'+
+        var list = j.data || [];
+        if (!list.length) {
+          box.innerHTML = '<p class="p-4 text-sm text-slate-500">No products yet. Click + Add.</p>';
+          return;
+        }
+        var rows = list.map(function(p){
+          var imgs = parseImgs(p.images);
+          var thumb = imgs[0]
+            ? '<img src="'+esc(imgs[0])+'" class="w-14 h-14 object-cover rounded-lg border" onerror="this.src=\'\';this.outerHTML=\'<span class=text-xs>—</span>\'">'
+            : '<span class="text-slate-400 text-xs">No img</span>';
+          return '<tr class="border-t align-top hover:bg-slate-50">'+
+            '<td class="p-2">'+thumb+'</td>'+
+            '<td class="p-2"><div class="font-medium text-sm">'+esc(p.nameEn)+'</div>'+
+              '<div class="text-xs text-slate-400">'+esc(p.slug)+'</div>'+
+              (p.isFeatured ? '<span class="text-[10px] bg-amber-100 text-amber-800 px-1 rounded">Featured</span>' : '')+
+            '</td>'+
+            '<td class="p-2 text-sm">'+money(p.price)+'</td>'+
+            '<td class="p-2 text-sm">'+p.stock+'</td>'+
+            '<td class="p-2 text-xs">'+(p.isActive!==false?'<span class="text-green-700">Active</span>':'<span class="text-red-600">Off</span>')+'</td>'+
+            '<td class="p-2 space-y-1 whitespace-nowrap">'+
+              '<button data-id="'+p.id+'" class="editP text-blue-600 text-xs font-medium block">Edit</button>'+
+              '<button data-id="'+p.id+'" class="delP text-red-600 text-xs block">Delete</button>'+
             '</td></tr>';
         }).join('');
-        box.innerHTML = '<table class="w-full text-left"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Name</th><th class="p-2">Slug</th><th class="p-2">Price</th><th class="p-2">Stock</th><th class="p-2">Status</th><th class="p-2"></th></tr></thead><tbody>'+rows+'</tbody></table>';
-        box.querySelectorAll('.saveP').forEach(function(b){
-          b.onclick = async function(){
-            var stock = box.querySelector('input.stock[data-id="'+b.dataset.id+'"]');
-            var price = box.querySelector('input.price[data-id="'+b.dataset.id+'"]');
-            await api('/products/'+b.dataset.id, { method:'PATCH', body: JSON.stringify({
-              stock: parseInt(stock.value,10),
-              price: parseInt(price.value,10)
-            }) });
-            loadProducts();
+        box.innerHTML = '<table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs text-slate-500"><tr>'+
+          '<th class="p-2">Image</th><th class="p-2">Name</th><th class="p-2">Price</th><th class="p-2">Stock</th><th class="p-2">Status</th><th class="p-2"></th>'+
+          '</tr></thead><tbody>'+rows+'</tbody></table>';
+
+        box.querySelectorAll('.editP').forEach(function(b){
+          b.onclick = function(){
+            var p = list.find(function(x){ return x.id === b.dataset.id; });
+            if (p) showProductForm(p);
           };
         });
         box.querySelectorAll('.delP').forEach(function(b){
           b.onclick = async function(){
-            if (!confirm('Disable product?')) return;
-            await api('/products/'+b.dataset.id, { method:'DELETE' });
-            loadProducts();
+            if (!confirm('Deactivate this product? (soft delete)')) return;
+            try {
+              await api('/products/'+b.dataset.id, { method:'DELETE' });
+              loadProducts();
+            } catch(e){ alert(e.message); }
           };
         });
-      } catch(e) { box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+      } catch (e) {
+        box.innerHTML = '<p class="p-4 text-red-600 text-sm">'+esc(e.message)+'</p>';
+      }
     }
 
-    document.getElementById('newProduct').onclick = async function() {
-      var cats = [];
-      try { cats = (await api('/admin/categories')).data || []; } catch(e) {}
+    function parseImgs(raw) {
+      try {
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string') return JSON.parse(raw || '[]');
+      } catch(e) {}
+      return [];
+    }
+    function esc(s) {
+      return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    }
+    function apiOrigin() {
+      return String(API || '').replace(/\/api\/?$/, '');
+    }
+    async function uploadImageFile(file) {
+      return new Promise(function(resolve, reject) {
+        if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+          reject(new Error('Choose an image file (jpg/png/webp)'));
+          return;
+        }
+        if (file.size > 5.5 * 1024 * 1024) {
+          reject(new Error('Image max 5.5MB'));
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = async function() {
+          try {
+            var dataUrl = reader.result;
+            var j = await api('/uploads/image', {
+              method: 'POST',
+              body: JSON.stringify({
+                image: dataUrl,
+                filename: (file.name || 'product').replace(/\s+/g, '-').toLowerCase()
+              })
+            });
+            var url = (j.data && (j.data.url || j.data.path)) || '';
+            if (!url) throw new Error('Upload failed');
+            // Prefer absolute URL for storefront
+            if (url.charAt(0) === '/') url = apiOrigin() + url;
+            resolve(url);
+          } catch (e) { reject(e); }
+        };
+        reader.onerror = function(){ reject(new Error('Could not read file')); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function showProductForm(product) {
       var box = document.getElementById('productFormBox');
       box.classList.remove('hidden');
-      var catOpts = cats.map(function(c){ return '<option value="'+c.id+'">'+c.nameEn+'</option>'; }).join('');
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      var cats = [];
+      try { cats = (await api('/products/meta/categories')).data || []; } catch(e) {}
+      var isEdit = !!(product && product.id);
+      var imgs = isEdit ? parseImgs(product.images) : [];
+      var catOpts = cats.map(function(c){
+        var sel = isEdit && product.categoryId === c.id ? ' selected' : '';
+        return '<option value="'+c.id+'"'+sel+'>'+esc(c.nameEn || c.slug)+'</option>';
+      }).join('');
+
       box.innerHTML =
-        '<input id="np_name" class="w-full border rounded px-2 py-1" placeholder="Name EN">'+
-        '<input id="np_slug" class="w-full border rounded px-2 py-1" placeholder="slug">'+
-        '<input id="np_price" type="number" class="w-full border rounded px-2 py-1" placeholder="Price">'+
-        '<input id="np_stock" type="number" class="w-full border rounded px-2 py-1" placeholder="Stock" value="10">'+
-        '<select id="np_cat" class="w-full border rounded px-2 py-1">'+catOpts+'</select>'+
-        '<textarea id="np_desc" class="w-full border rounded px-2 py-1" placeholder="Description"></textarea>'+
-        '<button id="np_go" class="bg-pink-600 text-white px-3 py-2 rounded">Create product</button>';
-      document.getElementById('np_go').onclick = async function(){
-        try {
-          await api('/products', { method:'POST', body: JSON.stringify({
-            nameEn: document.getElementById('np_name').value,
-            nameSw: document.getElementById('np_name').value,
-            slug: document.getElementById('np_slug').value,
-            descriptionEn: document.getElementById('np_desc').value || '-',
-            descriptionSw: document.getElementById('np_desc').value || '-',
-            price: parseInt(document.getElementById('np_price').value,10),
-            stock: parseInt(document.getElementById('np_stock').value,10),
-            categoryId: document.getElementById('np_cat').value,
-            images: []
-          })});
-          box.classList.add('hidden');
-          loadProducts();
-        } catch(e){ alert(e.message); }
+        '<div class="flex justify-between items-center mb-2">'+
+          '<p class="font-semibold text-sm">'+(isEdit ? 'Edit product' : 'Add product')+'</p>'+
+          '<button type="button" id="pf_close" class="text-xs text-slate-500">Close</button>'+
+        '</div>'+
+        '<div class="grid md:grid-cols-2 gap-2">'+
+          '<input id="pf_name" class="border rounded-lg px-3 py-2 text-sm" placeholder="Name (English) *" value="'+(isEdit?esc(product.nameEn):'')+'">'+
+          '<input id="pf_name_sw" class="border rounded-lg px-3 py-2 text-sm" placeholder="Name (Swahili)" value="'+(isEdit?esc(product.nameSw||''):'')+'">'+
+          '<input id="pf_slug" class="border rounded-lg px-3 py-2 text-sm" placeholder="slug-auto-from-name" value="'+(isEdit?esc(product.slug):'')+'">'+
+          '<select id="pf_cat" class="border rounded-lg px-3 py-2 text-sm"><option value="">Category *</option>'+catOpts+'</select>'+
+          '<input id="pf_price" type="number" min="0" class="border rounded-lg px-3 py-2 text-sm" placeholder="Price TZS *" value="'+(isEdit?product.price:'')+'">'+
+          '<input id="pf_stock" type="number" min="0" class="border rounded-lg px-3 py-2 text-sm" placeholder="Stock *" value="'+(isEdit?product.stock:10)+'">'+
+        '</div>'+
+        '<textarea id="pf_desc" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm mt-2" placeholder="Description">'+(isEdit?esc(product.descriptionEn||''):'')+'</textarea>'+
+        '<div class="mt-3 border-t pt-3">'+
+          '<p class="text-xs font-medium text-slate-600 mb-1">Images</p>'+
+          '<p class="text-[11px] text-slate-400 mb-2">Upload from phone/PC or paste image URLs</p>'+
+          '<div class="flex flex-wrap gap-2 mb-2" id="pf_previews"></div>'+
+          '<input type="file" id="pf_file" accept="image/*" class="text-xs mb-2 block w-full">'+
+          '<button type="button" id="pf_upload_btn" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-2">Upload selected file</button>'+
+          '<p id="pf_up_msg" class="text-xs text-slate-500 mb-2"></p>'+
+          '<input id="pf_img1" class="w-full border rounded-lg px-3 py-2 text-sm mb-1" placeholder="Image 1 URL" value="'+esc(imgs[0]||'')+'">'+
+          '<input id="pf_img2" class="w-full border rounded-lg px-3 py-2 text-sm mb-1" placeholder="Image 2 URL (optional)" value="'+esc(imgs[1]||'')+'">'+
+          '<input id="pf_img3" class="w-full border rounded-lg px-3 py-2 text-sm mb-1" placeholder="Image 3 URL (optional)" value="'+esc(imgs[2]||'')+'">'+
+        '</div>'+
+        '<label class="flex items-center gap-2 text-sm mt-2"><input type="checkbox" id="pf_featured" '+(isEdit&&product.isFeatured?'checked':'')+'> Featured on home</label>'+
+        (isEdit ? '<label class="flex items-center gap-2 text-sm mt-1"><input type="checkbox" id="pf_active" '+(product.isActive!==false?'checked':'')+'> Active (visible in shop)</label>' : '')+
+        '<div class="flex gap-2 mt-3">'+
+          '<button type="button" id="pf_save" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium">'+(isEdit?'Update product':'Save product')+'</button>'+
+          '<button type="button" id="pf_cancel" class="border px-4 py-2 rounded-lg text-sm">Cancel</button>'+
+        '</div>';
+
+      function refreshPreviews() {
+        var urls = [document.getElementById('pf_img1').value, document.getElementById('pf_img2').value, document.getElementById('pf_img3').value].filter(Boolean);
+        document.getElementById('pf_previews').innerHTML = urls.map(function(u){
+          return '<img src="'+esc(u)+'" class="w-16 h-16 object-cover rounded-lg border" onerror="this.style.opacity=0.3">';
+        }).join('') || '<span class="text-xs text-slate-400">No images yet</span>';
+      }
+      ['pf_img1','pf_img2','pf_img3'].forEach(function(id){
+        document.getElementById(id).oninput = refreshPreviews;
+      });
+      refreshPreviews();
+
+      document.getElementById('pf_close').onclick = document.getElementById('pf_cancel').onclick = function(){
+        box.classList.add('hidden'); box.innerHTML = '';
       };
+
+      document.getElementById('pf_upload_btn').onclick = async function(){
+        var msg = document.getElementById('pf_up_msg');
+        var fileInput = document.getElementById('pf_file');
+        var file = fileInput.files && fileInput.files[0];
+        if (!file) { msg.textContent = 'Choose a file first'; return; }
+        msg.textContent = 'Uploading…';
+        try {
+          var url = await uploadImageFile(file);
+          var slots = ['pf_img1','pf_img2','pf_img3'];
+          var placed = false;
+          for (var i=0;i<slots.length;i++) {
+            var el = document.getElementById(slots[i]);
+            if (!el.value) { el.value = url; placed = true; break; }
+          }
+          if (!placed) document.getElementById('pf_img1').value = url;
+          refreshPreviews();
+          msg.textContent = 'Uploaded ✓';
+          msg.className = 'text-xs text-green-700 mb-2';
+        } catch(e) {
+          msg.textContent = e.message || 'Upload failed';
+          msg.className = 'text-xs text-red-600 mb-2';
+        }
+      };
+
+      document.getElementById('pf_save').onclick = async function(){
+        try {
+          var name = document.getElementById('pf_name').value.trim();
+          if (!name) throw new Error('Name is required');
+          var slug = document.getElementById('pf_slug').value.trim() ||
+            name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+          var cat = document.getElementById('pf_cat').value;
+          if (!cat) throw new Error('Category is required');
+          var price = parseInt(document.getElementById('pf_price').value, 10);
+          if (!price || price < 1) throw new Error('Price must be > 0');
+          var stock = parseInt(document.getElementById('pf_stock').value, 10);
+          if (isNaN(stock) || stock < 0) stock = 0;
+          var imgs = [
+            document.getElementById('pf_img1').value.trim(),
+            document.getElementById('pf_img2').value.trim(),
+            document.getElementById('pf_img3').value.trim()
+          ].filter(Boolean);
+          var payload = {
+            nameEn: name,
+            nameSw: document.getElementById('pf_name_sw').value.trim() || name,
+            slug: slug,
+            descriptionEn: document.getElementById('pf_desc').value.trim() || name,
+            descriptionSw: document.getElementById('pf_desc').value.trim() || name,
+            price: price,
+            stock: stock,
+            categoryId: cat,
+            images: imgs,
+            isFeatured: document.getElementById('pf_featured').checked
+          };
+          if (isEdit) {
+            payload.isActive = document.getElementById('pf_active').checked;
+            await api('/products/'+product.id, { method:'PATCH', body: JSON.stringify(payload) });
+            alert('Product updated');
+          } else {
+            payload.isActive = true;
+            await api('/products', { method:'POST', body: JSON.stringify(payload) });
+            alert('Product created');
+          }
+          box.classList.add('hidden');
+          box.innerHTML = '';
+          loadProducts();
+        } catch(e) { alert(e.message); }
+      };
+    }
+
+    document.getElementById('newProduct').onclick = function() {
+      showProductForm(null);
     };
 
     async function loadServices() {
@@ -429,14 +589,23 @@
       box.innerHTML = 'Loading…';
       try {
         var j = await api('/admin/services');
-        var rows = (j.data||[]).map(function(s){
-          return '<tr class="border-t"><td class="p-2">'+s.nameEn+'</td><td class="p-2 text-xs">'+s.slug+'</td>'+
+        var list = j.data || [];
+        var rows = list.map(function(s){
+          var thumb = s.imageUrl
+            ? '<img src="'+s.imageUrl+'" class="w-12 h-12 object-cover rounded border" onerror="this.outerHTML=\'—\'">'
+            : '<span class="text-slate-400 text-xs">No img</span>';
+          return '<tr class="border-t align-top">'+
+            '<td class="p-2">'+thumb+'</td>'+
+            '<td class="p-2">'+s.nameEn+'<div class="text-xs text-slate-400">'+s.slug+'</div></td>'+
             '<td class="p-2"><input data-id="'+s.id+'" class="sdur w-16 border rounded px-1" type="number" value="'+s.durationMinutes+'"></td>'+
             '<td class="p-2"><input data-id="'+s.id+'" class="spr w-24 border rounded px-1" type="number" value="'+s.price+'"></td>'+
-            '<td class="p-2 space-x-1"><button data-id="'+s.id+'" class="saveS text-pink-600 text-xs">Update</button> '+
-            '<button data-id="'+s.id+'" class="delS text-red-600 text-xs">Delete</button></td></tr>';
+            '<td class="p-2 space-y-1">'+
+              '<button data-id="'+s.id+'" class="saveS text-pink-600 text-xs block">Save</button>'+
+              '<button data-id="'+s.id+'" class="editS text-blue-600 text-xs block">Edit image</button>'+
+              '<button data-id="'+s.id+'" class="delS text-red-600 text-xs block">Delete</button>'+
+            '</td></tr>';
         }).join('');
-        box.innerHTML = '<table class="w-full text-left"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Name</th><th class="p-2">Slug</th><th class="p-2">Time</th><th class="p-2">Price</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+        box.innerHTML = '<table class="w-full text-left"><thead class="bg-slate-50 text-xs"><tr><th class="p-2">Img</th><th class="p-2">Name</th><th class="p-2">Time</th><th class="p-2">Price</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
         box.querySelectorAll('.saveS').forEach(function(b){
           b.onclick = async function(){
             var dur = box.querySelector('input.sdur[data-id="'+b.dataset.id+'"]');
@@ -448,10 +617,41 @@
             loadServices();
           };
         });
+        box.querySelectorAll('.editS').forEach(function(b){
+          b.onclick = function(){
+            var s = list.find(function(x){ return x.id === b.dataset.id; });
+            if (!s) return;
+            var boxf = document.getElementById('serviceFormBox');
+            boxf.classList.remove('hidden');
+            boxf.innerHTML =
+              '<p class="text-sm font-semibold mb-2">Edit: '+s.nameEn+'</p>'+
+              '<input id="es_name" class="w-full border rounded px-2 py-1 mb-1" value="'+String(s.nameEn||'').replace(/"/g,'&quot;')+'">'+
+              '<input id="es_price" type="number" class="w-full border rounded px-2 py-1 mb-1" value="'+s.price+'">'+
+              '<input id="es_dur" type="number" class="w-full border rounded px-2 py-1 mb-1" value="'+s.durationMinutes+'">'+
+              '<input id="es_img" class="w-full border rounded px-2 py-1 mb-1" placeholder="Image URL https://..." value="'+(s.imageUrl||'')+'">'+
+              '<div class="flex gap-2">'+
+                '<button id="es_save" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm">Update</button>'+
+                '<button id="es_cancel" class="border px-4 py-2 rounded-lg text-sm">Cancel</button>'+
+              '</div>';
+            document.getElementById('es_cancel').onclick = function(){ boxf.classList.add('hidden'); };
+            document.getElementById('es_save').onclick = async function(){
+              try {
+                await api('/services/'+s.id,{method:'PATCH',body:JSON.stringify({
+                  nameEn: document.getElementById('es_name').value.trim(),
+                  price: parseInt(document.getElementById('es_price').value,10),
+                  durationMinutes: parseInt(document.getElementById('es_dur').value,10),
+                  imageUrl: document.getElementById('es_img').value.trim() || null
+                })});
+                boxf.classList.add('hidden');
+                loadServices();
+              } catch(e){ alert(e.message); }
+            };
+          };
+        });
         box.querySelectorAll('.delS').forEach(function(b){
           b.onclick = async function(){ if(confirm('Delete service?')) { await api('/services/'+b.dataset.id,{method:'DELETE'}); loadServices(); } };
         });
-      } catch(e){ box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
+      } catch(e) { box.innerHTML = '<p class="p-4 text-red-600">'+e.message+'</p>'; }
     }
 
     document.getElementById('newService').onclick = async function() {
@@ -459,24 +659,40 @@
       try { cats = (await api('/admin/service-categories')).data || []; } catch(e) {}
       var box = document.getElementById('serviceFormBox');
       box.classList.remove('hidden');
-      var catOpts = cats.map(function(c){ return '<option value="'+c.id+'">'+c.nameEn+'</option>'; }).join('');
+      var catOpts = cats.map(function(c){ return '<option value="'+c.id+'">'+(c.nameEn||c.slug)+'</option>'; }).join('');
+      if (!catOpts) catOpts = '<option value="">No categories — seed DB</option>';
       box.innerHTML =
-        '<input id="ns_name" class="w-full border rounded px-2 py-1" placeholder="Name">'+
-        '<input id="ns_slug" class="w-full border rounded px-2 py-1" placeholder="slug">'+
-        '<input id="ns_price" type="number" class="w-full border rounded px-2 py-1" placeholder="Price">'+
-        '<input id="ns_mins" type="number" class="w-full border rounded px-2 py-1" value="60">'+
+        '<input id="ns_name" class="w-full border rounded px-2 py-1" placeholder="Service name EN">'+
+        '<input id="ns_name_sw" class="w-full border rounded px-2 py-1" placeholder="Name SW (optional)">'+
+        '<input id="ns_slug" class="w-full border rounded px-2 py-1" placeholder="slug-like-this">'+
+        '<textarea id="ns_desc" class="w-full border rounded px-2 py-1" rows="2" placeholder="Description"></textarea>'+
+        '<div class="grid grid-cols-2 gap-2">'+
+          '<input id="ns_price" type="number" class="border rounded px-2 py-1" placeholder="Price TZS">'+
+          '<input id="ns_dur" type="number" class="border rounded px-2 py-1" placeholder="Minutes" value="60">'+
+        '</div>'+
         '<select id="ns_cat" class="w-full border rounded px-2 py-1">'+catOpts+'</select>'+
-        '<button id="ns_go" class="bg-pink-600 text-white px-3 py-2 rounded">Create service</button>';
-      document.getElementById('ns_go').onclick = async function(){
+        '<input id="ns_img" class="w-full border rounded px-2 py-1" placeholder="Image URL (https://...)">'+
+        '<div class="flex gap-2 mt-1">'+
+          '<button id="ns_save" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm">Save service</button>'+
+          '<button id="ns_cancel" class="border px-4 py-2 rounded-lg text-sm">Cancel</button>'+
+        '</div>';
+      document.getElementById('ns_cancel').onclick = function(){ box.classList.add('hidden'); };
+      document.getElementById('ns_save').onclick = async function(){
         try {
+          var name = document.getElementById('ns_name').value.trim();
+          var slug = document.getElementById('ns_slug').value.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+          if (!name) throw new Error('Name required');
+          if (!document.getElementById('ns_cat').value) throw new Error('Category required');
           await api('/services', { method:'POST', body: JSON.stringify({
-            nameEn: document.getElementById('ns_name').value,
-            nameSw: document.getElementById('ns_name').value,
-            slug: document.getElementById('ns_slug').value,
-            descriptionEn: '-', descriptionSw: '-',
-            durationMinutes: parseInt(document.getElementById('ns_mins').value,10),
-            price: parseInt(document.getElementById('ns_price').value,10),
-            categoryId: document.getElementById('ns_cat').value
+            nameEn: name,
+            nameSw: document.getElementById('ns_name_sw').value.trim() || name,
+            slug: slug,
+            descriptionEn: document.getElementById('ns_desc').value || name,
+            descriptionSw: document.getElementById('ns_desc').value || name,
+            price: parseInt(document.getElementById('ns_price').value,10) || 0,
+            durationMinutes: parseInt(document.getElementById('ns_dur').value,10) || 60,
+            categoryId: document.getElementById('ns_cat').value,
+            imageUrl: document.getElementById('ns_img').value.trim() || undefined
           })});
           box.classList.add('hidden');
           loadServices();

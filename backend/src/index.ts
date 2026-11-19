@@ -41,7 +41,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '5mb' })); // images via base64
+app.use(express.json({ limit: '8mb' })); // images via base64
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limits
